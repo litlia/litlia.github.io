@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Little Ice Age — Sermons x Weather Correlation Timeline</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --black:  #111111;
+      --dark:   #1a1a1a;
+      --panel:  #161616;
+      --border: #2a2a2a;
+      --red:    #8b1a1a;
+      --red-lt: #b52222;
+      --grey1:  #888888;
+      --grey2:  #555555;
+      --text:   #cccccc;
+      --white:  #f0f0f0;
+    }
+
+    html, body { height: 100%; background: var(--black); color: var(--text);
+                 font-family: 'Georgia', serif; overflow: hidden; }
+
+    /* ── Header ─────────────────────────────────────── */
+    header {
+      height: 52px; background: var(--dark); border-bottom: 2px solid var(--red);
+      display: flex; align-items: center; padding: 0 24px; gap: 16px; flex-shrink: 0;
+    }
+    header h1 { font-size: 1rem; font-weight: normal; letter-spacing: .12em;
+                text-transform: uppercase; color: var(--white); }
+    header .sub { font-size: .8rem; color: var(--grey1); font-style: italic; }
+    header .pill {
+      margin-left: auto; font-size: .72rem; color: var(--grey2);
+      font-family: 'Courier New', monospace; letter-spacing: .06em; text-transform: uppercase;
+    }
+
+    /* ── Layout ──────────────────────────────────────── */
+    #app { display: flex; height: calc(100vh - 52px); overflow: hidden; }
+
+    /* ── Sidebar ─────────────────────────────────────── */
+    #sidebar {
+      width: 230px; flex-shrink: 0; background: var(--panel);
+      border-right: 2px solid var(--border); overflow-y: auto;
+      scrollbar-width: thin; scrollbar-color: var(--grey2) transparent;
+    }
+    #sidebar h2 {
+      font-size: .65rem; text-transform: uppercase; letter-spacing: .1em;
+      color: var(--grey2); padding: 14px 16px 10px;
+      font-family: 'Courier New', monospace; border-bottom: 1px solid var(--border);
+    }
+    .sermon-item {
+      padding: 10px 16px; cursor: pointer; border-bottom: 1px solid var(--border);
+      transition: background .15s;
+    }
+    .sermon-item:hover { background: #1e1e1e; }
+    .sermon-item.active { background: #1e1e1e; border-left: 3px solid var(--red); }
+    .sermon-item .s-year { font-size: 1.1rem; color: var(--red); line-height: 1; }
+    .sermon-item .s-author { font-size: .78rem; color: var(--text); margin-top: 2px; }
+    .sermon-item .s-place {
+      font-size: .7rem; color: var(--grey1); margin-top: 2px;
+      font-family: 'Courier New', monospace;
+    }
+    .sermon-item .s-count {
+      font-size: .65rem; color: var(--red-lt); margin-top: 3px;
+      font-family: 'Courier New', monospace;
+    }
+
+    /* ── Main panel ──────────────────────────────────── */
+    #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+
+    /* ── Map ─────────────────────────────────────────── */
+    #map { flex: 1; z-index: 0; min-height: 0; }
+
+    .leaflet-control-attribution { background: rgba(17,17,17,.7)!important; color:#555!important; }
+    .leaflet-control-attribution a { color:#666!important; }
+    .leaflet-control-zoom a { background:var(--dark)!important; color:var(--text)!important;
+                              border-color:var(--border)!important; }
+
+    /* ── Map pin styles ──────────────────────────────── */
+    .map-sermon-pin {
+      display: flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px; border-radius: 50%;
+      background: rgba(139,26,26,.25); border: 1.5px solid var(--red-lt);
+      color: var(--red-lt);
+      filter: drop-shadow(0 0 5px rgba(181,34,34,.6));
+      cursor: pointer;
+      transition: opacity .4s, filter .2s;
+    }
+    .map-sermon-pin:hover { filter: drop-shadow(0 0 10px rgba(220,60,60,.9)); }
+
+    .wx-pin {
+      display: flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: rgba(22,22,22,.6);
+      color: var(--grey2);
+      cursor: pointer;
+      opacity: 0.12;
+      transition: color .2s, opacity .35s;
+    }
+    .wx-pin:hover { color: var(--white); }
+    .wx-pin.past  { opacity: 1; color: var(--text); }
+
+    /* ── Sermon metadata card (map overlay) ──────────── */
+    #sermon-card {
+      position: absolute; top: 12px; right: 12px; z-index: 800;
+      width: 320px; max-height: calc(100% - 24px);
+      background: rgba(17,17,17,.97); border: 1px solid var(--red);
+      border-radius: 3px; overflow: hidden;
+      display: flex; flex-direction: column;
+      opacity: 0; pointer-events: none;
+      transform: translateX(18px);
+      transition: opacity .25s, transform .25s;
+    }
+    #sermon-card.visible {
+      opacity: 1; pointer-events: auto; transform: translateX(0);
+    }
+    #card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px; background: var(--dark); border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    #card-header .card-year {
+      font-size: 1.3rem; color: var(--red); font-family: 'Georgia', serif;
+    }
+    #card-header .card-author {
+      font-size: .8rem; color: var(--text); margin-left: 10px; flex: 1;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    #card-close {
+      background: none; border: none; color: var(--grey2); font-size: 1.1rem;
+      cursor: pointer; padding: 2px 4px; line-height: 1; flex-shrink: 0;
+      transition: color .15s;
+    }
+    #card-close:hover { color: var(--white); }
+    #card-body {
+      overflow-y: auto; padding: 12px 14px; flex: 1;
+      scrollbar-width: thin; scrollbar-color: var(--grey2) transparent;
+    }
+    #card-body table {
+      width: 100%; border-collapse: collapse; font-size: .72rem;
+    }
+    #card-body tr { border-bottom: 1px solid var(--border); }
+    #card-body td { padding: 5px 0; vertical-align: top; line-height: 1.45; }
+    #card-body td:first-child {
+      color: var(--grey1); font-family: 'Courier New', monospace;
+      white-space: nowrap; padding-right: 10px; font-size: .66rem;
+      text-transform: uppercase; letter-spacing: .04em;
+    }
+    #card-body td:last-child { color: var(--text); }
+    #card-body a { color: var(--red-lt); text-decoration: none; }
+    #card-body a:hover { text-decoration: underline; }
+
+    /* Phenomena row */
+    .phenomena-row td:first-child { color: var(--white) !important; font-weight: bold; }
+    .phenomena-row td:last-child  { color: var(--white) !important; }
+    .phenom-tags { display: flex; flex-wrap: wrap; gap: 5px; padding-top: 2px; }
+    .phenom-tag {
+      font-size: .65rem; font-family: 'Courier New', monospace;
+      background: rgba(139,26,26,.25); border: 1px solid var(--red);
+      color: var(--white); border-radius: 2px; padding: 2px 7px;
+      letter-spacing: .03em; white-space: nowrap;
+    }
+
+    /* ── Info bar ────────────────────────────────────── */
+    #info-bar {
+      flex-shrink: 0; height: 50px; background: var(--dark);
+      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 24px; gap: 24px; overflow: hidden;
+    }
+    #info-year   { font-size: 1.5rem; color: var(--red); font-family: 'Georgia', serif; flex-shrink: 0; }
+    #info-author { font-size: .82rem; color: var(--white); flex: 1; overflow: hidden;
+                   text-overflow: ellipsis; white-space: nowrap; }
+    #info-place  { font-size: .7rem; color: var(--grey1); font-family: 'Courier New', monospace; flex-shrink: 0; }
+    #info-match  { font-size: .67rem; color: var(--red-lt); font-family: 'Courier New', monospace; flex-shrink: 0; }
+
+    /* ── Timeline section ────────────────────────────── */
+    #timeline-section {
+      flex-shrink: 0; background: var(--panel); padding: 14px 28px 14px;
+      border-top: 1px solid var(--border);
+    }
+    #tl-header {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;
+    }
+    #tl-header h3 {
+      font-size: .63rem; text-transform: uppercase; letter-spacing: .1em;
+      color: var(--grey2); font-family: 'Courier New', monospace;
+    }
+    #tl-hint {
+      font-size: .62rem; color: var(--grey2); font-family: 'Courier New', monospace;
+      font-style: italic;
+    }
+
+    /* ── Scrubber track ──────────────────────────────── */
+    #timeline {
+      position: relative; height: 48px; cursor: ew-resize; user-select: none;
+    }
+    #tl-bar {
+      position: absolute; top: 50%; left: 0; right: 0;
+      height: 2px; background: var(--border); transform: translateY(-50%);
+    }
+    #tl-bar-fill {
+      height: 100%; background: var(--red); width: 0%;
+    }
+    .tl-end-label {
+      position: absolute; top: 0; font-size: .6rem; color: var(--grey2);
+      font-family: 'Courier New', monospace;
+    }
+    #tl-label-left  { left: 0; }
+    #tl-label-right { right: 0; text-align: right; }
+
+    #scrubber {
+      position: absolute; top: 50%; left: 0;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: var(--red); border: 2px solid var(--white);
+      transform: translate(-50%, -50%);
+      cursor: ew-resize;
+      box-shadow: 0 0 0 3px rgba(139,26,26,.35);
+      transition: box-shadow .15s;
+      z-index: 10;
+    }
+    #scrubber:hover { box-shadow: 0 0 0 5px rgba(181,34,34,.45); }
+    #scrubber-label {
+      position: absolute; bottom: calc(100% + 5px); left: 50%;
+      transform: translateX(-50%);
+      font-size: .62rem; color: var(--red-lt); font-family: 'Courier New', monospace;
+      white-space: nowrap; pointer-events: none;
+    }
+
+    /* ── Legend ──────────────────────────────────────── */
+    #legend {
+      display: flex; gap: 14px; flex-wrap: wrap;
+      margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border);
+    }
+    .legend-item {
+      font-size: .65rem; color: var(--grey1); display: flex;
+      align-items: center; gap: 5px; font-family: 'Courier New', monospace;
+    }
+    .legend-item svg { opacity: .7; }
+
+    /* ── Tooltip ─────────────────────────────────────── */
+    #ev-tooltip {
+      position: fixed; background: rgba(22,22,22,.96); border: 1px solid var(--red);
+      border-radius: 2px; padding: 6px 10px; font-size: .72rem; color: var(--text);
+      font-family: 'Courier New', monospace; pointer-events: none;
+      z-index: 9999; opacity: 0; transition: opacity .15s;
+      white-space: nowrap; line-height: 1.6;
+    }
+    #ev-tooltip.visible { opacity: 1; }
+
+    /* ── Responsive ──────────────────────────────────── */
+    @media (max-width: 700px) { #sidebar { display: none; } }
+  </style>
+</head>
+<body>
+
+<header>
+  <div style="display:flex;align-items:baseline;gap:12px">
+    <h1>Little Ice Age</h1>
+    <span class="sub">Sermons x Weather Correlation Timeline</span>
+  </div>
+  <span class="pill" id="match-count"></span>
+</header>
+
+<div id="app">
+  <nav id="sidebar">
+    <h2>Sermons</h2>
+    <div id="sermon-list"></div>
+  </nav>
+
+  <div id="main">
+    <div id="map"></div>
+
+    <!-- Sermon metadata card (over the map) -->
+    <div id="sermon-card">
+      <div id="card-header">
+        <span class="card-year" id="card-year"></span>
+        <span class="card-author" id="card-author"></span>
+        <button id="card-close" title="Close">✕</button>
+      </div>
+      <div id="card-body">
+        <table id="card-table"></table>
+      </div>
+    </div>
+
+    <div id="info-bar">
+      <div id="info-year">—</div>
+      <div id="info-author">Select a sermon from the list</div>
+      <div id="info-place"></div>
+      <div id="info-match"></div>
+    </div>
+
+    <div id="timeline-section">
+      <div id="tl-header">
+        <h3>Drag to advance time — book icon appears at sermon date</h3>
+        <span id="tl-hint">click the book to see metadata</span>
+      </div>
+
+      <div id="timeline">
+        <div id="tl-bar"><div id="tl-bar-fill"></div></div>
+        <span class="tl-end-label" id="tl-label-left"></span>
+        <span class="tl-end-label" id="tl-label-right"></span>
+        <div id="scrubber">
+          <span id="scrubber-label"></span>
+        </div>
+      </div>
+
+      <div id="legend">
+        <div class="legend-item" id="legend-book"></div>
+        <div class="legend-item" id="legend-lightning"></div>
+        <div class="legend-item" id="legend-snow"></div>
+        <div class="legend-item" id="legend-rain"></div>
+        <div class="legend-item" id="legend-wind"></div>
+        <div class="legend-item" id="legend-flood"></div>
+        <div class="legend-item" id="legend-thermo"></div>
+        <div class="legend-item" id="legend-cloud"></div>
+        <div class="legend-item" id="legend-wheat"></div>
+        <div class="legend-item" id="legend-grape"></div>
+        <div class="legend-item" id="legend-scales"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="ev-tooltip"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="sermon-data.js"></script>
+<script src="weather-data.js"></script>
+<script src="phenomena-data.js"></script>
+<script>
+// ── SVG Pictogram Library ─────────────────────────────────────────────────────
+function svg(paths) {
+  return `<svg viewBox="0 0 20 20" width="16" height="16" fill="none"
+    stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+    stroke-linejoin="round">${paths}</svg>`;
+}
+
+const ICONS = {
+  book: svg(
+    `<rect x="3" y="3" width="14" height="14" rx="1"/>
+     <line x1="10" y1="3" x2="10" y2="17"/>
+     <line x1="5"  y1="7" x2="9"  y2="7"/>
+     <line x1="5"  y1="10" x2="9" y2="10"/>
+     <line x1="11" y1="7" x2="15" y2="7"/>
+     <line x1="11" y1="10" x2="15" y2="10"/>`
+  ),
+  lightning: svg(`<polyline points="11,2 6,11 10,11 9,18 14,9 10,9"/>`),
+  snow: svg(
+    `<line x1="10" y1="2"  x2="10" y2="18"/>
+     <line x1="2"  y1="10" x2="18" y2="10"/>
+     <line x1="4"  y1="4"  x2="16" y2="16"/>
+     <line x1="16" y1="4"  x2="4"  y2="16"/>
+     <line x1="10" y1="5"  x2="8"  y2="3"/><line x1="10" y1="5"  x2="12" y2="3"/>
+     <line x1="10" y1="15" x2="8"  y2="17"/><line x1="10" y1="15" x2="12" y2="17"/>
+     <line x1="5"  y1="10" x2="3"  y2="8"/><line x1="5"  y1="10" x2="3"  y2="12"/>
+     <line x1="15" y1="10" x2="17" y2="8"/><line x1="15" y1="10" x2="17" y2="12"/>`
+  ),
+  rain: svg(
+    `<path d="M5,10 Q5,5 10,5 Q14,5 14,9 Q17,9 17,12 Q17,14 14,14 L6,14 Q3,14 3,11 Q3,9 5,10Z"/>
+     <line x1="7"  y1="16" x2="6"  y2="19"/>
+     <line x1="10" y1="16" x2="9"  y2="19"/>
+     <line x1="13" y1="16" x2="12" y2="19"/>`
+  ),
+  wind: svg(
+    `<path d="M2,7 Q7,5 12,7 Q15,8 17,7 Q19,6 18,4 Q17,2 15,3"/>
+     <path d="M2,10 Q8,8 14,10 Q17,11 18,10"/>
+     <path d="M2,13 Q7,11 11,13 Q13,14 15,13 Q17,12 17,15 Q17,17 15,17"/>`
+  ),
+  flood: svg(
+    `<path d="M2,8  Q5,5  8,8  Q11,11 14,8  Q17,5  18,8"/>
+     <path d="M2,13 Q5,10 8,13 Q11,16 14,13 Q17,10 18,13"/>`
+  ),
+  thermo: svg(
+    `<path d="M10,2 Q7,2 7,7 L7,13 Q7,17 10,17 Q13,17 13,13 L13,7 Q13,2 10,2Z"/>
+     <circle cx="10" cy="14" r="2" fill="currentColor" stroke="none"/>
+     <line x1="10" y1="12" x2="10" y2="6"/>`
+  ),
+  cloud: svg(`<path d="M5,14 Q2,14 2,11 Q2,8 5,8 Q5,5 8,5 Q11,5 12,7 Q14,6 16,8 Q18,8 18,11 Q18,14 15,14Z"/>`),
+  fog: svg(
+    `<line x1="3"  y1="7"  x2="17" y2="7"/>
+     <line x1="5"  y1="10" x2="15" y2="10"/>
+     <line x1="3"  y1="13" x2="14" y2="13"/>`
+  ),
+  wheat: svg(
+    `<line x1="10" y1="17" x2="10" y2="4"/>
+     <ellipse cx="10" cy="7"  rx="3" ry="1.8" transform="rotate(-20,10,7)"/>
+     <ellipse cx="10" cy="7"  rx="3" ry="1.8" transform="rotate(20,10,7)"/>
+     <ellipse cx="10" cy="11" rx="3" ry="1.8" transform="rotate(-20,10,11)"/>
+     <ellipse cx="10" cy="11" rx="3" ry="1.8" transform="rotate(20,10,11)"/>
+     <path d="M10,17 Q7,15 5,16"/>`
+  ),
+  scales: svg(
+    `<line x1="10" y1="3"  x2="10" y2="17"/>
+     <line x1="5"  y1="6"  x2="15" y2="6"/>
+     <circle cx="5" cy="6" r=".8" fill="currentColor" stroke="none"/>
+     <circle cx="15" cy="6" r=".8" fill="currentColor" stroke="none"/>
+     <path d="M3,6 L5,12 Q5,14 7,14 Q9,14 7,12Z"/>
+     <path d="M17,6 L15,12 Q15,14 13,14 Q11,14 13,12Z"/>
+     <line x1="7" y1="17" x2="13" y2="17"/>`
+  ),
+  grape: svg(
+    `<circle cx="10" cy="5"  r="2"/>
+     <circle cx="7"  cy="8"  r="2"/>
+     <circle cx="13" cy="8"  r="2"/>
+     <circle cx="10" cy="11" r="2"/>
+     <circle cx="7"  cy="14" r="2"/>
+     <circle cx="13" cy="14" r="2"/>
+     <path d="M10,3 Q12,2 13,1"/>`
+  ),
+};
+
+// Coding → icon key  (matched against weather_data.js 'coding' field, lowercase substring)
+const CODING_MAP = [
+  [['thunderstorm', 'hail'],                                         'lightning'],
+  [['snow', 'ice', 'freez', 'thaw', 'snowmelt'],                     'snow'],
+  [['precipitation', 'rain', 'rainbow'],                             'rain'],
+  [['wind'],                                                         'wind'],
+  [['flood'],                                                        'flood'],
+  [['temperature'],                                                  'thermo'],
+  [['cloud', 'fog', 'halo'],                                         'cloud'],
+  [['flora', 'fauna', 'grain', 'harvest', 'oat', 'plant', 'blossom'],'wheat'],
+  [['food market', 'price', 'kind of goods', 'market'],              'scales'],
+];
+function getIconKey(coding) {
+  if (!coding) return 'cloud';
+  const lower = coding.toLowerCase();
+  for (const [terms, key] of CODING_MAP)
+    if (terms.some(t => lower.includes(t))) return key;
+  return 'cloud';
+}
+function getIcon(coding) { return ICONS[getIconKey(coding)] || ICONS.cloud; }
+
+// ── Legend ────────────────────────────────────────────────────────────────────
+[
+  ['legend-book',      'book',      'Sermon'],
+  ['legend-lightning', 'lightning', 'Storm / Hail'],
+  ['legend-snow',      'snow',      'Snow / Ice / Freeze'],
+  ['legend-rain',      'rain',      'Rain / Precipitation'],
+  ['legend-wind',      'wind',      'Wind'],
+  ['legend-flood',     'flood',     'Flood'],
+  ['legend-thermo',    'thermo',    'Temperature'],
+  ['legend-cloud',     'cloud',     'Clouds / Fog / Halo'],
+  ['legend-wheat',     'wheat',     'Flora & Fauna'],
+  ['legend-grape',     'grape',     'Wine'],
+  ['legend-scales',    'scales',    'Food Market'],
+].forEach(([id, key, label]) => {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = ICONS[key] + label;
+});
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function parseCoords(s) {
+  if (!s) return null;
+  const m = s.match(/(\d+)[°]\s*(\d+)[^\dN]*N,?\s*(\d+)[°]\s*(\d+)[^\dE]*E/i);
+  return m ? [parseInt(m[1]) + parseInt(m[2])/60,
+              parseInt(m[3]) + parseInt(m[4])/60] : null;
+}
+function sermonYear(s) {
+  return parseFloat(String(s.year || '').replace(/[\[\]]/g,'').trim()) || null;
+}
+function formatYear(y) {
+  if (y == null) return '—';
+  const yr = Math.floor(y);
+  const mo = Math.round((y - yr) * 12) + 1;
+  return mo > 1 ? `${yr}-${String(mo).padStart(2,'0')}` : String(yr);
+}
+function matchWeather(sermon) {
+  // Strip editorial brackets e.g. "[Augsburg]" → "augsburg" before comparing
+  const p = (sermon.place_of_print || '').replace(/[\[\]]/g, '').toLowerCase().trim();
+  return WEATHER.filter(w => w.city.toLowerCase().trim() === p);
+}
+function pseudoRand(seed) { return Math.abs(Math.sin(seed * 127.1 + 31.41) * 43758.5453) % 1; }
+function offsetCoords(ll, idx) {
+  const angle = pseudoRand(idx) * 2 * Math.PI;
+  const r = 0.03 + pseudoRand(idx + 100) * 0.07;
+  return [ll[0] + Math.sin(angle) * r, ll[1] + Math.cos(angle) * r];
+}
+
+// ── Map ───────────────────────────────────────────────────────────────────────
+const map = L.map('map', { center: [50.5, 11], zoom: 5, zoomControl: true });
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+  subdomains: 'abcd', maxZoom: 19,
+}).addTo(map);
+
+const styleEl = document.createElement('style');
+styleEl.textContent = `.map-tt{background:#1a1a1a;border:1px solid #8b1a1a;color:#ccc;font-family:'Courier New',monospace;font-size:.68rem;padding:4px 8px;border-radius:2px;white-space:nowrap;line-height:1.5}.leaflet-div-icon{background:none;border:none}`;
+document.head.appendChild(styleEl);
+
+let sermonMarker = null;
+let wxGroup      = L.layerGroup().addTo(map);
+let currentSermon = null;
+let currentSermonYear = null;
+
+function buildMapLayers(sermon, events) {
+  if (sermonMarker) { map.removeLayer(sermonMarker); sermonMarker = null; }
+  wxGroup.clearLayers();
+
+  const ll = parseCoords(sermon.coordinates);
+  if (!ll) return;
+
+  const sy = sermonYear(sermon);
+  currentSermonYear = sy;
+
+  // Sermon pin — starts hidden; revealed by scrubber
+  sermonMarker = L.marker(ll, {
+    icon: L.divIcon({
+      className: '',
+      html: `<div class="map-sermon-pin" id="sermon-pin" data-year="${sy || 9999}"
+               style="opacity:0;pointer-events:none">${ICONS.book}</div>`,
+      iconSize: [28, 28], iconAnchor: [14, 14],
+    }),
+    zIndexOffset: 1000,
+    interactive: true,
+  }).addTo(map);
+
+  sermonMarker.on('click', () => {
+    const pin = document.getElementById('sermon-pin');
+    if (pin && parseFloat(pin.style.opacity) >= 1) showSermonCard(sermon);
+  });
+
+  // Weather pins — also start hidden, revealed by scrubber
+  events.forEach((ev, i) => {
+    const pos = offsetCoords(ll, i);
+    const m = L.marker(pos, {
+      icon: L.divIcon({
+        className: '',
+        html: `<div class="wx-pin" data-year="${ev.year}">${getIcon(ev.coding)}</div>`,
+        iconSize: [22, 22], iconAnchor: [11, 11],
+      }),
+    });
+    m.bindTooltip(
+      `<strong>${ev.period}</strong><br>${ev.position}<br>${ev.coding}`,
+      { direction: 'top', offset: [0, -6], className: 'map-tt' }
+    );
+    wxGroup.addLayer(m);
+  });
+
+  map.flyTo(ll, 9, { duration: 0.9 });
+}
+
+// ── Sermon metadata card ──────────────────────────────────────────────────────
+const card      = document.getElementById('sermon-card');
+const cardClose = document.getElementById('card-close');
+cardClose.addEventListener('click', () => card.classList.remove('visible'));
+
+const CARD_FIELDS = [
+  ['year',             'Year'],
+  ['author',           'Author'],
+  ['title_original',   'Title'],
+  ['place_of_print',   'Place'],
+  ['printer',          'Printer'],
+  ['language',         'Language'],
+  ['vd_number',        'VD No.'],
+  ['url_digitization', 'URL'],
+  ['bible_passage',    'Bible ref.'],
+  ['notes',            'Notes'],
+];
+
+function showSermonCard(sermon) {
+  document.getElementById('card-year').textContent   =
+    String(sermon.year || '').replace(/[\[\]]/g, '');
+  document.getElementById('card-author').textContent =
+    (sermon.author || '').split(',')[0];
+
+  const tbl = document.getElementById('card-table');
+  tbl.innerHTML = '';
+  CARD_FIELDS.forEach(([key, label]) => {
+    const val = sermon[key];
+    if (!val || val === 'null') return;
+    const tr  = tbl.insertRow();
+    tr.insertCell().textContent = label;
+    const td  = tr.insertCell();
+    if (key === 'url_digitization') {
+      const a = document.createElement('a');
+      a.href = val; a.textContent = 'Open digitisation'; a.target = '_blank';
+      td.appendChild(a);
+    } else {
+      td.textContent = val;
+    }
+  });
+
+  // Phenomena row — highlighted in white with pill tags
+  const phenomena = (typeof PHENOMENA !== 'undefined' && PHENOMENA[sermon.slug]) || [];
+  if (phenomena.length > 0) {
+    const tr = tbl.insertRow();
+    tr.className = 'phenomena-row';
+    tr.insertCell().textContent = 'Phenomena';
+    const td = tr.insertCell();
+    const wrap = document.createElement('div');
+    wrap.className = 'phenom-tags';
+    phenomena.forEach(p => {
+      const tag = document.createElement('span');
+      tag.className = 'phenom-tag';
+      tag.textContent = p;
+      wrap.appendChild(tag);
+    });
+    td.appendChild(wrap);
+  }
+
+  card.classList.add('visible');
+}
+
+// ── Timeline scrubber ─────────────────────────────────────────────────────────
+const tlEl       = document.getElementById('timeline');
+const scrubber   = document.getElementById('scrubber');
+const scrubLabel = document.getElementById('scrubber-label');
+const barFill    = document.getElementById('tl-bar-fill');
+const lblLeft    = document.getElementById('tl-label-left');
+const lblRight   = document.getElementById('tl-label-right');
+
+let tlMin = 1540, tlMax = 1760;
+
+function yearToPct(y)  { return Math.max(0, Math.min(100, (y - tlMin) / (tlMax - tlMin) * 100)); }
+function pctToYear(p)  { return tlMin + (p / 100) * (tlMax - tlMin); }
+
+function setScrubberPct(pct) {
+  pct = Math.max(0, Math.min(100, pct));
+  scrubber.style.left = pct + '%';
+  barFill.style.width = pct + '%';
+  const yr = pctToYear(pct);
+  scrubLabel.textContent = formatYear(yr);
+  updatePinVisibility(yr);
+}
+
+function updatePinVisibility(currentYear) {
+  // Weather pins
+  document.querySelectorAll('.wx-pin').forEach(el => {
+    el.classList.toggle('past', parseFloat(el.dataset.year) <= currentYear);
+  });
+  // Sermon pin — appears only when scrubber reaches the sermon year
+  const pin = document.getElementById('sermon-pin');
+  if (pin) {
+    const revealed = parseFloat(pin.dataset.year) <= currentYear;
+    pin.style.opacity       = revealed ? '1' : '0';
+    pin.style.pointerEvents = revealed ? 'auto' : 'none';
+  }
+}
+
+function initTimeline(sermon, events) {
+  const sy    = sermonYear(sermon);
+  const years = events.map(e => e.year).filter(Boolean);
+  if (sy) years.push(sy);
+  if (!years.length) return;
+
+  const minY = Math.min(...years);
+  const maxY = Math.max(...years);
+  tlMin = Math.floor((minY - 5) / 5) * 5;
+  tlMax = Math.ceil((maxY  + 5) / 5) * 5;
+
+  lblLeft.textContent  = tlMin;
+  lblRight.textContent = tlMax;
+
+  // Always reset to start (pct = 0, i.e. tlMin)
+  setScrubberPct(0);
+}
+
+// Drag logic
+let dragging = false;
+function pctFromX(clientX) {
+  const rect = tlEl.getBoundingClientRect();
+  return (clientX - rect.left) / rect.width * 100;
+}
+scrubber.addEventListener('mousedown', e => { dragging = true; e.preventDefault(); });
+tlEl.addEventListener('mousedown', e => {
+  setScrubberPct(pctFromX(e.clientX)); dragging = true; e.preventDefault();
+});
+document.addEventListener('mousemove', e => { if (dragging) setScrubberPct(pctFromX(e.clientX)); });
+document.addEventListener('mouseup', () => { dragging = false; });
+scrubber.addEventListener('touchstart', e => { dragging = true; e.preventDefault(); }, { passive: false });
+document.addEventListener('touchmove', e => {
+  if (dragging) setScrubberPct(pctFromX(e.touches[0].clientX));
+}, { passive: true });
+document.addEventListener('touchend', () => { dragging = false; });
+
+// ── Sidebar ───────────────────────────────────────────────────────────────────
+let activeItem = null;
+
+function selectSermon(sermon, itemEl) {
+  if (activeItem) activeItem.classList.remove('active');
+  activeItem = itemEl;
+  itemEl.classList.add('active');
+
+  // Close any open card
+  card.classList.remove('visible');
+
+  currentSermon = sermon;
+  const events  = matchWeather(sermon);
+  const yr      = String(sermon.year || '').replace(/[\[\]]/g, '');
+
+  document.getElementById('info-year').textContent   = yr;
+  document.getElementById('info-author').textContent =
+    sermon.title_original ? sermon.title_original.slice(0, 80) + '…' : sermon.author || '';
+  document.getElementById('info-place').textContent  = sermon.place_of_print || '';
+  document.getElementById('info-match').textContent  =
+    events.length > 0 ? `${events.length} weather events` : '';
+
+  buildMapLayers(sermon, events);
+  initTimeline(sermon, events);   // resets scrubber to 0
+}
+
+function buildSidebar() {
+  const list   = document.getElementById('sermon-list');
+  const sorted = [...SERMONS]
+    .sort((a, b) =>
+      parseFloat(String(a.year||0).replace(/[\[\]]/g,'')) -
+      parseFloat(String(b.year||0).replace(/[\[\]]/g,''))
+    )
+    .filter(s => matchWeather(s).length > 0);
+
+  document.getElementById('match-count').textContent =
+    ``;
+
+  sorted.forEach(s => {
+    const events = matchWeather(s);
+    const item   = document.createElement('div');
+    item.className = 'sermon-item';
+    item.innerHTML = `
+      <div class="s-year">${String(s.year||'').replace(/[\[\]]/g,'')}</div>
+      <div class="s-author">${(s.author||'').split(',')[0]}</div>
+      <div class="s-place">${s.place_of_print||'—'}</div>
+      <div class="s-count">${events.length} event${events.length!==1?'s':''}</div>`;
+    item.addEventListener('click', () => selectSermon(s, item));
+    list.appendChild(item);
+  });
+
+  // Auto-select first
+  if (sorted.length > 0) selectSermon(sorted[0], list.firstElementChild);
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+buildSidebar();
+</script>
+</body>
+</html>
