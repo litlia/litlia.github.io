@@ -34,6 +34,14 @@
     text-transform: uppercase; color: var(--white);
   }
   header .sub { font-size: .8rem; color: var(--grey1); font-style: italic; }
+  header .back {
+    margin-left: auto;
+    font-size: .75rem; color: var(--grey2);
+    font-family: 'Courier New', monospace; letter-spacing: .07em;
+    text-transform: uppercase; text-decoration: none;
+    transition: color .15s;
+  }
+  header .back:hover { color: var(--red-lt); }
 
   /* ── Chat window ── */
   #chat-wrap {
@@ -129,6 +137,7 @@
 <header>
   <h1>Little Ice Age</h1>
   <span class="sub">Sermon Quote Generator</span>
+  <a class="back" href="index.html">&#8592; Home</a>
 </header>
 
 <div id="chat-wrap">

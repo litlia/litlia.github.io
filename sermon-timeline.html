@@ -33,9 +33,17 @@
                 text-transform: uppercase; color: var(--white); }
     header .sub { font-size: .8rem; color: var(--grey1); font-style: italic; }
     header .pill {
-      margin-left: auto; font-size: .72rem; color: var(--grey2);
+      font-size: .72rem; color: var(--grey2);
       font-family: 'Courier New', monospace; letter-spacing: .06em; text-transform: uppercase;
     }
+    header .back {
+      margin-left: auto;
+      font-size: .75rem; color: var(--grey2);
+      font-family: 'Courier New', monospace; letter-spacing: .07em;
+      text-transform: uppercase; text-decoration: none;
+      transition: color .15s;
+    }
+    header .back:hover { color: var(--red-lt); }
 
     /* ── Layout ──────────────────────────────────────── */
     #app { display: flex; height: calc(100vh - 52px); overflow: hidden; }
@@ -45,6 +53,12 @@
       width: 230px; flex-shrink: 0; background: var(--panel);
       border-right: 2px solid var(--border); overflow-y: auto;
       scrollbar-width: thin; scrollbar-color: var(--grey2) transparent;
+    }
+    #sidebar-desc {
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: .76rem; line-height: 1.65;
+      color: var(--grey1); font-style: italic;
     }
     #sidebar h2 {
       font-size: .65rem; text-transform: uppercase; letter-spacing: .1em;
@@ -261,11 +275,13 @@
     <h1>Little Ice Age</h1>
     <span class="sub">Sermons x Weather Correlation Timeline</span>
   </div>
+  <a class="back" href="index.html">&#8592; Home</a>
   <span class="pill" id="match-count"></span>
 </header>
 
 <div id="app">
   <nav id="sidebar">
+    <p id="sidebar-desc">As extreme weather events became more frequent in the early modern period, sermons addressing such phenomena increasingly appeared in print. The interactive timeline visualizes the chronological relationship between the weather events preceding these sermons and their publication dates.</p>
     <h2>Sermons</h2>
     <div id="sermon-list"></div>
   </nav>
