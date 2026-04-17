@@ -19,7 +19,44 @@
     --white:  #f0f0f0;
     --blue-lt:#3a7ab8;
     --amber-lt:#c4881a;
+    --edge-normal:      #1e1e1e;
+    --edge-highlighted: #999;
+    --edge-default:     #2e2e2e;
+    /* ── rgba helpers ── */
+    --card-bg:    rgba(17,17,17,0.93);
+    --card-hover: rgba(26,26,26,0.97);
+    --ctx-bg:     rgba(17,17,17,0.88);
+    --overlay-bg: rgba(8,0,0,0.30);
+    --mark-bg:    rgba(139,26,26,.32);
+    --mark-text:  #e07070;
+    --legend-bg:  rgba(22,22,22,.92);
   }
+
+  [data-theme="light"] {
+    --black:  #f2ede4;
+    --dark:   #e6e0d5;
+    --panel:  #ede8df;
+    --border: #b8b0a0;
+    --red:    #8b1a1a;
+    --red-lt: #9e1f1f;
+    --grey1:  #444444;
+    --grey2:  #666666;
+    --text:   #1a1a1a;
+    --white:  #111111;
+    --card-bg:    rgba(242,237,228,0.95);
+    --card-hover: rgba(230,224,213,0.98);
+    --ctx-bg:     rgba(242,237,228,0.92);
+    --overlay-bg: rgba(255,250,240,0.15);
+    --mark-bg:    rgba(139,26,26,.18);
+    --mark-text:  #6a1a1a;
+    --legend-bg:  rgba(235,229,218,.95);
+    --edge-normal:      #ccc;
+    --edge-highlighted: #888;
+    --edge-default:     #bbb;
+  }
+
+  [data-theme="light"] .node.Bibelstelle circle { fill: #2a5a9a; stroke: #5090cc; }
+  [data-theme="light"] .dot.Bibelstelle { background: #2a5a9a; border-color: #5090cc; }
   html, body {
     height: 100vh; background: var(--black); color: var(--text);
     font-family: Georgia, serif;
@@ -76,7 +113,7 @@
 
   #legend {
     position: absolute; bottom: 1.1rem; left: 1.1rem;
-    background: rgba(22,22,22,.92); border: 1px solid var(--border);
+    background: var(--legend-bg); border: 1px solid var(--border);
     padding: .6rem .9rem; font-family: 'Courier New', monospace;
     font-size: .67rem; color: var(--grey2); letter-spacing: .08em;
     line-height: 2; pointer-events: none; display: none;
@@ -98,6 +135,13 @@
     letter-spacing: .18em; text-transform: uppercase; color: var(--grey2);
   }
 </style>
+<script>
+(function(){
+  var t=localStorage.getItem('litlia-theme')||(window.matchMedia('(prefers-color-scheme:light)').matches?'light':'dark');
+  document.documentElement.setAttribute('data-theme',t);
+  document.addEventListener('DOMContentLoaded',function(){var b=document.getElementById('theme-toggle');if(b)b.textContent=t==='light'?'☽':'☀';});
+})();
+</script>
 </head>
 <body>
 
@@ -105,6 +149,7 @@
   <h1>Little Ice Age</h1>
   <span class="sub">Corpus Network</span>
   <a class="back" href="sermon-networks.html">&#8592; Home</a>
+  <button id="theme-toggle" onclick="toggleTheme()" aria-label="Toggle light/dark mode" style="background:none;border:1px solid var(--border);border-radius:3px;cursor:pointer;font-size:.85rem;color:var(--grey2);padding:3px 8px;font-family:'Courier New',monospace;transition:color .15s,border-color .15s">☀</button>
 </header>
 
 <div id="network">
@@ -113,10 +158,10 @@
   <div id="tooltip"></div>
   <div id="loading">Loading network&hellip;</div>
   <div id="legend">
-    <div><span class="dot Predigt"></span>Predigt <span style="color:#444">(size = connections)</span></div>
+    <div><span class="dot Predigt"></span>Predigt <span style="color:var(--grey2)">(size = connections)</span></div>
     <div><span class="dot Bibelstelle"></span>Bibelstelle <span style="color:#444">(size = connections)</span></div>
     <div><span class="dot Wetter"></span>Wetterdaten</div>
-    <div style="margin-top:.3rem;color:#333;font-size:.6rem">Scroll: zoom &middot; drag: pan/node &middot; hover: label</div>
+    <div style="margin-top:.3rem;color:var(--grey2);font-size:.6rem">Scroll: zoom &middot; drag: pan/node &middot; hover: label</div>
   </div>
   <div id="stats"></div>
 </div>
@@ -252,6 +297,10 @@ function makeWetterIcon(id, r) {
 
     /* ── 6. Canvas edge drawing — assigned to outer drawEdges ── */
     drawEdges = function () {
+      var cs=getComputedStyle(document.documentElement);
+      var cEdgeDim=cs.getPropertyValue('--edge-normal').trim()||'#1e1e1e';
+      var cEdgeHl =cs.getPropertyValue('--edge-highlighted').trim()||'#999';
+      var cEdgeDef=cs.getPropertyValue('--edge-default').trim()||'#2e2e2e';
       var ctx = canvas.getContext('2d');
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.save();
@@ -261,7 +310,7 @@ function makeWetterIcon(id, r) {
 
       if (hoveredId) {
         ctx.beginPath();
-        ctx.strokeStyle = '#1e1e1e';
+        ctx.strokeStyle = cEdgeDim;
         ctx.lineWidth   = lw;
         ctx.globalAlpha = 0.07;
         links.forEach(function (l) {
@@ -273,7 +322,7 @@ function makeWetterIcon(id, r) {
         ctx.stroke();
 
         ctx.beginPath();
-        ctx.strokeStyle = '#999';
+        ctx.strokeStyle = cEdgeHl;
         ctx.lineWidth   = 1.3 / tx.k;
         ctx.globalAlpha = 0.7;
         links.forEach(function (l) {
@@ -285,7 +334,7 @@ function makeWetterIcon(id, r) {
         ctx.stroke();
       } else {
         ctx.beginPath();
-        ctx.strokeStyle = '#2e2e2e';
+        ctx.strokeStyle = cEdgeDef;
         ctx.lineWidth   = lw;
         ctx.globalAlpha = 0.65;
         links.forEach(function (l) {
@@ -296,6 +345,8 @@ function makeWetterIcon(id, r) {
       }
       ctx.restore();
     };
+
+    window.addEventListener('litlia-theme', function(){ drawEdges(); });
 
     /* ── 7. Zoom ── */
     var g = svgEl.append('g');
@@ -406,6 +457,15 @@ function makeWetterIcon(id, r) {
     console.error(err);
   });
 })();
+</script>
+<script>
+function toggleTheme(){
+  var next=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';
+  document.documentElement.setAttribute('data-theme',next);
+  localStorage.setItem('litlia-theme',next);
+  var b=document.getElementById('theme-toggle');if(b)b.textContent=next==='light'?'☽':'☀';
+  window.dispatchEvent(new Event('litlia-theme'));
+}
 </script>
 </body>
 </html>

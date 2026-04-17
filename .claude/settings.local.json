@@ -5,7 +5,9 @@
       "mcp__Claude_in_Chrome__tabs_context_mcp",
       "Bash(python3 -c ' *)",
       "Read(//tmp/**)",
-      "Bash(python3)"
+      "Bash(python3)",
+      "Bash(grep -n \"strokeStyle\\\\|fillStyle\\\\|rgba\\\\|#[0-9a-f]\\\\{3,6\\\\}\" \"C:/Users/lucag/Documents/GitHub/litlia.github.io/network-3.html\")",
+      "Bash(python3 __theme_patch.py)"
     ]
   }
 }

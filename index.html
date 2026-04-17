@@ -17,6 +17,34 @@
     --grey2:  #555555;
     --text:   #cccccc;
     --white:  #f0f0f0;
+    /* ── rgba helpers ── */
+    --card-bg:    rgba(17,17,17,0.93);
+    --card-hover: rgba(26,26,26,0.97);
+    --ctx-bg:     rgba(17,17,17,0.88);
+    --overlay-bg: rgba(8,0,0,0.30);
+    --mark-bg:    rgba(139,26,26,.32);
+    --mark-text:  #e07070;
+    --legend-bg:  rgba(22,22,22,.92);
+  }
+
+  [data-theme="light"] {
+    --black:  #f2ede4;
+    --dark:   #e6e0d5;
+    --panel:  #ede8df;
+    --border: #b8b0a0;
+    --red:    #8b1a1a;
+    --red-lt: #9e1f1f;
+    --grey1:  #444444;
+    --grey2:  #666666;
+    --text:   #1a1a1a;
+    --white:  #111111;
+    --card-bg:    rgba(242,237,228,0.95);
+    --card-hover: rgba(230,224,213,0.98);
+    --ctx-bg:     rgba(242,237,228,0.92);
+    --overlay-bg: rgba(255,250,240,0.15);
+    --mark-bg:    rgba(139,26,26,.18);
+    --mark-text:  #6a1a1a;
+    --legend-bg:  rgba(235,229,218,.95);
   }
 
   html, body {
@@ -35,7 +63,7 @@
   body::before {
     content: '';
     position: fixed; inset: 0;
-    background: rgba(8, 0, 0, 0.30);
+    background: var(--overlay-bg);
     z-index: 0;
   }
 
@@ -51,7 +79,7 @@
 
   /* ── Title box ── */
   .title-box {
-    background: rgba(17, 17, 17, 0.93);
+    background: var(--card-bg);
     border: 1px solid var(--border);
     border-top: 3px solid var(--red);
     padding: 2.6rem 3.5rem;
@@ -76,7 +104,7 @@
   }
   .card {
     flex: 1;
-    background: rgba(17, 17, 17, 0.93);
+    background: var(--card-bg);
     border: 1px solid var(--border);
     border-top: 3px solid var(--red);
     padding: 1.8rem 1.4rem 1.4rem;
@@ -86,7 +114,7 @@
   }
   .card:hover {
     border-color: var(--red-lt);
-    background: rgba(26, 26, 26, 0.97);
+    background: var(--card-hover);
   }
   .card .tag {
     font-family: 'Courier New', monospace;
@@ -112,7 +140,7 @@
   /* ── Context box ── */
   .context-box {
     max-width: 880px; width: 100%;
-    background: rgba(17, 17, 17, 0.88);
+    background: var(--ctx-bg);
     border: 1px solid var(--border);
     border-left: 3px solid var(--red);
     padding: 1.2rem 1.8rem;
@@ -130,7 +158,7 @@
 
   /* ── Credits ── */
   .credits {
-    background: rgba(17, 17, 17, 0.88);
+    background: var(--ctx-bg);
     border: 1px solid var(--border);
     padding: .65rem 1.6rem;
     font-size: .76rem; color: var(--grey2);
@@ -144,15 +172,31 @@
   .credits a:hover { color: var(--red-lt); border-color: var(--red-lt); }
 
   /* ── Responsive ── */
+  #theme-toggle {
+    position: fixed; top: 1rem; right: 1rem; z-index: 10;
+    background: var(--card-bg); border: 1px solid var(--border); border-radius: 3px;
+    cursor: pointer; font-size: .85rem; color: var(--grey2); padding: 4px 9px;
+    font-family: 'Courier New', monospace; transition: color .15s, border-color .15s;
+  }
+  #theme-toggle:hover { color: var(--red-lt); border-color: var(--red-lt); }
+
   @media (max-width: 640px) {
     .cards { flex-direction: column; }
     .title-box { padding: 1.8rem 1.4rem; }
     .title-box h1 { font-size: 1.15rem; }
   }
 </style>
+<script>
+(function(){
+  var t=localStorage.getItem('litlia-theme')||(window.matchMedia('(prefers-color-scheme:light)').matches?'light':'dark');
+  document.documentElement.setAttribute('data-theme',t);
+  document.addEventListener('DOMContentLoaded',function(){var b=document.getElementById('theme-toggle');if(b)b.textContent=t==='light'?'☽':'☀';});
+})();
+</script>
 </head>
 <body>
 <main>
+<button id="theme-toggle" onclick="toggleTheme()" aria-label="Toggle light/dark mode">☀</button>
 
   <div class="title-box">
     <h1>Traces of the Little Ice Age<br>in Early Modern Literature</h1>
@@ -196,5 +240,13 @@
   </p>
 
 </main>
+<script>
+function toggleTheme(){
+  var next=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';
+  document.documentElement.setAttribute('data-theme',next);
+  localStorage.setItem('litlia-theme',next);
+  var b=document.getElementById('theme-toggle');if(b)b.textContent=next==='light'?'☽':'☀';
+}
+</script>
 </body>
 </html>

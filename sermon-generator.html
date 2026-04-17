@@ -17,6 +17,34 @@
     --grey2:  #555555;
     --text:   #cccccc;
     --white:  #f0f0f0;
+    /* ── rgba helpers ── */
+    --card-bg:    rgba(17,17,17,0.93);
+    --card-hover: rgba(26,26,26,0.97);
+    --ctx-bg:     rgba(17,17,17,0.88);
+    --overlay-bg: rgba(8,0,0,0.30);
+    --mark-bg:    rgba(139,26,26,.32);
+    --mark-text:  #e07070;
+    --legend-bg:  rgba(22,22,22,.92);
+  }
+
+  [data-theme="light"] {
+    --black:  #f2ede4;
+    --dark:   #e6e0d5;
+    --panel:  #ede8df;
+    --border: #b8b0a0;
+    --red:    #8b1a1a;
+    --red-lt: #9e1f1f;
+    --grey1:  #444444;
+    --grey2:  #666666;
+    --text:   #1a1a1a;
+    --white:  #111111;
+    --card-bg:    rgba(242,237,228,0.95);
+    --card-hover: rgba(230,224,213,0.98);
+    --ctx-bg:     rgba(242,237,228,0.92);
+    --overlay-bg: rgba(255,250,240,0.15);
+    --mark-bg:    rgba(139,26,26,.18);
+    --mark-text:  #6a1a1a;
+    --legend-bg:  rgba(235,229,218,.95);
   }
   html, body {
     height: 100vh; overflow: hidden;
@@ -117,8 +145,8 @@
 
   /* ── Highlight ── */
   .verse-text mark {
-    background: rgba(139,26,26,.32);
-    color: #e07070;
+    background: var(--mark-bg);
+    color: var(--mark-text);
     border-radius: 2px;
     padding: 0 2px;
     font-style: normal;
@@ -132,12 +160,20 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 </style>
+<script>
+(function(){
+  var t=localStorage.getItem('litlia-theme')||(window.matchMedia('(prefers-color-scheme:light)').matches?'light':'dark');
+  document.documentElement.setAttribute('data-theme',t);
+  document.addEventListener('DOMContentLoaded',function(){var b=document.getElementById('theme-toggle');if(b)b.textContent=t==='light'?'☽':'☀';});
+})();
+</script>
 </head>
 <body>
 <header>
   <h1>Little Ice Age</h1>
   <span class="sub">Sermon Quote Generator</span>
   <a class="back" href="index.html">&#8592; Home</a>
+  <button id="theme-toggle" onclick="toggleTheme()" aria-label="Toggle light/dark mode" style="background:none;border:1px solid var(--border);border-radius:3px;cursor:pointer;font-size:.85rem;color:var(--grey2);padding:3px 8px;font-family:'Courier New',monospace;transition:color .15s,border-color .15s">☀</button>
 </header>
 
 <div id="chat-wrap">
@@ -336,6 +372,14 @@ function ask() {
 
 document.getElementById('send-btn').addEventListener('click', ask);
 document.getElementById('q').addEventListener('keydown', e => { if (e.key === 'Enter') ask(); });
+</script>
+<script>
+function toggleTheme(){
+  var next=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';
+  document.documentElement.setAttribute('data-theme',next);
+  localStorage.setItem('litlia-theme',next);
+  var b=document.getElementById('theme-toggle');if(b)b.textContent=next==='light'?'☽':'☀';
+}
 </script>
 </body>
 </html>

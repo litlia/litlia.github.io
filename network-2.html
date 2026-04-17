@@ -17,6 +17,40 @@
     --grey2:  #555555;
     --text:   #cccccc;
     --white:  #f0f0f0;
+    /* ── rgba helpers ── */
+    --card-bg:    rgba(17,17,17,0.93);
+    --card-hover: rgba(26,26,26,0.97);
+    --ctx-bg:     rgba(17,17,17,0.88);
+    --overlay-bg: rgba(8,0,0,0.30);
+    --mark-bg:    rgba(139,26,26,.32);
+    --mark-text:  #e07070;
+    --legend-bg:  rgba(22,22,22,.92);
+    --edge-normal: #222;
+    --edge-sermon: #8b1a1a;
+    --edge-bible:  #2e2e2e;
+  }
+
+  [data-theme="light"] {
+    --black:  #f2ede4;
+    --dark:   #e6e0d5;
+    --panel:  #ede8df;
+    --border: #b8b0a0;
+    --red:    #8b1a1a;
+    --red-lt: #9e1f1f;
+    --grey1:  #444444;
+    --grey2:  #666666;
+    --text:   #1a1a1a;
+    --white:  #111111;
+    --card-bg:    rgba(242,237,228,0.95);
+    --card-hover: rgba(230,224,213,0.98);
+    --ctx-bg:     rgba(242,237,228,0.92);
+    --overlay-bg: rgba(255,250,240,0.15);
+    --mark-bg:    rgba(139,26,26,.18);
+    --mark-text:  #6a1a1a;
+    --legend-bg:  rgba(235,229,218,.95);
+    --edge-normal: #ccc;
+    --edge-sermon: #8b1a1a;
+    --edge-bible:  #aaa;
   }
   html, body {
     height: 100vh; background: var(--black); color: var(--text);
@@ -54,6 +88,8 @@
   .node circle { cursor: pointer; }
   .node.sermon circle { fill: #8b1a1a; stroke: #c43030; stroke-width: 1.5; }
   .node.bible  circle { fill: #3e3e3e; stroke: #777;    stroke-width: 1; }
+  [data-theme="light"] .node.bible circle { fill: #c0bbb0; stroke: #888; }
+  [data-theme="light"] .dot.bible { background: #c0bbb0; border-color: #888; }
   .node.dimmed     circle { opacity: 0.1; }
   .node.highlighted circle { stroke: var(--white); stroke-width: 2.5; }
 
@@ -114,7 +150,7 @@
 
   #legend {
     position: absolute; bottom: 1.1rem; left: 1.1rem;
-    background: rgba(22,22,22,.9); border: 1px solid var(--border);
+    background: var(--legend-bg); border: 1px solid var(--border);
     padding: .55rem .85rem; font-family: 'Courier New', monospace;
     font-size: .67rem; color: var(--grey2); letter-spacing: .08em;
     line-height: 1.9; pointer-events: none; display: none;
@@ -135,6 +171,13 @@
     letter-spacing: .18em; text-transform: uppercase; color: var(--grey2);
   }
 </style>
+<script>
+(function(){
+  var t=localStorage.getItem('litlia-theme')||(window.matchMedia('(prefers-color-scheme:light)').matches?'light':'dark');
+  document.documentElement.setAttribute('data-theme',t);
+  document.addEventListener('DOMContentLoaded',function(){var b=document.getElementById('theme-toggle');if(b)b.textContent=t==='light'?'☽':'☀';});
+})();
+</script>
 </head>
 <body>
 
@@ -142,6 +185,7 @@
   <h1>Little Ice Age</h1>
   <span class="sub">Sermon Network</span>
   <a class="back" href="sermon-networks.html">&#8592; Home</a>
+  <button id="theme-toggle" onclick="toggleTheme()" aria-label="Toggle light/dark mode" style="background:none;border:1px solid var(--border);border-radius:3px;cursor:pointer;font-size:.85rem;color:var(--grey2);padding:3px 8px;font-family:'Courier New',monospace;transition:color .15s,border-color .15s">☀</button>
 </header>
 
 <div id="network">
@@ -161,7 +205,7 @@
   <div id="legend">
     <div><span class="dot sermon"></span>Sermon</div>
     <div><span class="dot bible"></span>Bible passage &mdash; size = citation count</div>
-    <div style="margin-top:.35rem;color:#333;font-size:.6rem">Scroll: zoom &middot; drag: pan &middot; hover: label &middot; click: read</div>
+    <div style="margin-top:.35rem;color:var(--grey2);font-size:.6rem">Scroll: zoom &middot; drag: pan &middot; hover: label &middot; click: read</div>
   </div>
   <div id="stats"></div>
 </div>
@@ -335,6 +379,10 @@ function openSermonCard(id, passages) {
 
     /* ── 5. Canvas edge drawing ── */
     function drawEdges() {
+      const cs=getComputedStyle(document.documentElement);
+      const cEdgeNormal=cs.getPropertyValue('--edge-normal').trim()||'#222';
+      const cEdgeSermon=cs.getPropertyValue('--edge-sermon').trim()||'#8b1a1a';
+      const cEdgeBible =cs.getPropertyValue('--edge-bible').trim() ||'#2e2e2e';
       const ctx = canvas.getContext('2d');
       const cw = canvas.width, ch = canvas.height;
       ctx.clearRect(0, 0, cw, ch);
@@ -347,7 +395,7 @@ function openSermonCard(id, passages) {
       if (hoveredId) {
         /* Dimmed edges first */
         ctx.beginPath();
-        ctx.strokeStyle = '#222';
+        ctx.strokeStyle = cEdgeNormal;
         ctx.lineWidth = lw;
         ctx.globalAlpha = 0.08;
         links.forEach(l => {
@@ -359,7 +407,7 @@ function openSermonCard(id, passages) {
         ctx.stroke();
         /* Highlighted edges */
         ctx.beginPath();
-        ctx.strokeStyle = '#8b1a1a';
+        ctx.strokeStyle = cEdgeSermon;
         ctx.lineWidth = 1.4 / tx.k;
         ctx.globalAlpha = 0.8;
         links.forEach(l => {
@@ -371,7 +419,7 @@ function openSermonCard(id, passages) {
         ctx.stroke();
       } else {
         ctx.beginPath();
-        ctx.strokeStyle = '#2e2e2e';
+        ctx.strokeStyle = cEdgeBible;
         ctx.lineWidth = lw;
         ctx.globalAlpha = 0.55;
         links.forEach(l => {
@@ -384,6 +432,7 @@ function openSermonCard(id, passages) {
     }
 
     function nid(n) { return typeof n === 'object' ? n.id : n; }
+    window.addEventListener('litlia-theme', function(){ drawEdges(); });
 
     /* ── 6. SVG zoom ── */
     const g = svg.append('g');
@@ -493,6 +542,15 @@ function openSermonCard(id, passages) {
     console.error(err);
   });
 })();
+</script>
+<script>
+function toggleTheme(){
+  var next=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';
+  document.documentElement.setAttribute('data-theme',next);
+  localStorage.setItem('litlia-theme',next);
+  var b=document.getElementById('theme-toggle');if(b)b.textContent=next==='light'?'☽':'☀';
+  window.dispatchEvent(new Event('litlia-theme'));
+}
 </script>
 </body>
 </html>
