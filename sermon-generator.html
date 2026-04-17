@@ -107,6 +107,15 @@
   .card .verse-text { color: var(--text); font-size: .93rem; line-height: 1.6; font-style: italic; }
   .card .verse-text.loading { color: var(--grey2); font-style: normal; }
 
+  /* ── Highlight ── */
+  .verse-text mark {
+    background: rgba(139,26,26,.32);
+    color: #e07070;
+    border-radius: 2px;
+    padding: 0 2px;
+    font-style: normal;
+  }
+
   /* ── Spinner ── */
   .spinner {
     display: inline-block; width: .85em; height: .85em;
@@ -180,6 +189,82 @@
 <script>
 const DATA = {"Donner": [{"loc": "Job 37", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/job/chapters/37.json"}, {"loc": "Ex 9", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/exodus/chapters/9.json"}, {"loc": "Ps 18", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/psalms/chapters/18.json"}, {"loc": "2 Sam 22", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/2samuel/chapters/22.json"}, {"loc": "Ps 29", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/psalms/chapters/29.json"}, {"loc": "Job 40", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/job/chapters/40.json"}, {"loc": "Job 26", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/job/chapters/26.json"}, {"loc": "Ps 68", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/psalms/chapters/68.json"}, {"loc": "Ps 104", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/psalms/chapters/104.json"}, {"loc": "1 Sam 7", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/1samuel/chapters/7.json"}, {"loc": "Ps 77", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/psalms/chapters/77.json"}, {"loc": "1 Sam 12", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/1samuel/chapters/12.json"}, {"loc": "Luke 21", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/luke/chapters/21.json"}, {"loc": "Jer 25", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/jeremiah/chapters/25.json"}, {"loc": "Joel 2", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/joel/chapters/2.json"}, {"loc": "Isa 29", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/isaiah/chapters/29.json"}, {"loc": "Mark 3", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/mark/chapters/3.json"}, {"loc": "Rev 16", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/revelation/chapters/16.json"}], "Blitz": [{"loc": "Job 37", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/job/chapters/37.json"}, {"loc": "Job 38", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/job/chapters/38.json"}, {"loc": "Ex 9", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/exodus/chapters/9.json"}, {"loc": "Job 36", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/job/chapters/36.json"}, {"loc": "Jer 10", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/jeremiah/chapters/10.json"}, {"loc": "Ps 77", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/psalms/chapters/77.json"}, {"loc": "Dtn 32", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/deuteronomy/chapters/32.json"}, {"loc": "Ps 11", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/psalms/chapters/11.json"}, {"loc": "Ps 144", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/psalms/chapters/144.json"}, {"loc": "Rev 16", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/revelation/chapters/16.json"}, {"loc": "Job 1", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/job/chapters/1.json"}], "Wind": [{"loc": "Job 1", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/job/chapters/1.json"}, {"loc": "Ps 104", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/psalms/chapters/104.json"}, {"loc": "Ps 148", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/psalms/chapters/148.json"}, {"loc": "Ps 18", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/psalms/chapters/18.json"}, {"loc": "Jer 10", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/jeremiah/chapters/10.json"}, {"loc": "Jer 51", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/jeremiah/chapters/51.json"}], "Hagel": [{"loc": "Ex 9", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/exodus/chapters/9.json"}, {"loc": "Sir 40", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/ecclesiasticus/chapters/40.json"}, {"loc": "Ps 18", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/psalms/chapters/18.json"}, {"loc": "Ps 148", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/psalms/chapters/148.json"}, {"loc": "Job 38", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/job/chapters/38.json"}, {"loc": "Ps 78", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/psalms/chapters/78.json"}, {"loc": "Jos 10", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/joshua/chapters/10.json"}, {"loc": "Hag 2", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/haggai/chapters/2.json"}, {"loc": "Ps 147", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/psalms/chapters/147.json"}, {"loc": "Ps 105", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/psalms/chapters/105.json"}, {"loc": "Wis 5", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/wisdom/chapters/5.json"}, {"loc": "Ezek 13", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/ezekiel/chapters/13.json"}, {"loc": "Isa 30", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/isaiah/chapters/30.json"}], "Regen": [{"loc": "Ex 9", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/exodus/chapters/9.json"}, {"loc": "Amos 4", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/amos/chapters/4.json"}, {"loc": "Lev 26", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/leviticus/chapters/26.json"}, {"loc": "Dtn 28", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/deuteronomy/chapters/28.json"}, {"loc": "Mal 3", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/malachi/chapters/3.json"}, {"loc": "Dtn 11", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/deuteronomy/chapters/11.json"}, {"loc": "Job 37", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/job/chapters/37.json"}, {"loc": "Ps 147", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/psalms/chapters/147.json"}, {"loc": "Jer 14", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/jeremiah/chapters/14.json"}, {"loc": "Jer 10", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/jeremiah/chapters/10.json"}, {"loc": "Job 36", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/job/chapters/36.json"}, {"loc": "Ps 105", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/psalms/chapters/105.json"}, {"loc": "Ps 77", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/psalms/chapters/77.json"}, {"loc": "1 Sam 12", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/1samuel/chapters/12.json"}, {"loc": "Isa 30", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/isaiah/chapters/30.json"}], "Dürre": [{"loc": "Dtn 28", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/deuteronomy/chapters/28.json"}, {"loc": "Amos 4", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/amos/chapters/4.json"}, {"loc": "Hag 1", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/haggai/chapters/1.json"}, {"loc": "Hag 2", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/haggai/chapters/2.json"}, {"loc": "Lev 26", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/leviticus/chapters/26.json"}, {"loc": "1 Kgs 18", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/1kings/chapters/18.json"}, {"loc": "Isa 50", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/isaiah/chapters/50.json"}], "Tau": [{"loc": "Hag 1", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/haggai/chapters/1.json"}], "Feuer": [{"loc": "Sir 40", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/ecclesiasticus/chapters/40.json"}, {"loc": "Ps 148", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/psalms/chapters/148.json"}, {"loc": "Ex 9", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/exodus/chapters/9.json"}, {"loc": "Ps 104", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/psalms/chapters/104.json"}, {"loc": "Heb 1", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/hebrews/chapters/1.json"}, {"loc": "Job 1", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/job/chapters/1.json"}, {"loc": "Ps 105", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/psalms/chapters/105.json"}, {"loc": "2 Pet 3", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/2peter/chapters/3.json"}, {"loc": "Joel 2", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/joel/chapters/2.json"}, {"loc": "Ps 11", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/psalms/chapters/11.json"}, {"loc": "Isa 30", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/isaiah/chapters/30.json"}, {"loc": "Gen 19", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/genesis/chapters/19.json"}], "Flut": [{"loc": "Sir 40", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/ecclesiasticus/chapters/40.json"}, {"loc": "Amos 9", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/amos/chapters/9.json"}, {"loc": "Isa 24", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/isaiah/chapters/24.json"}], "Blitze": [{"loc": "Ps 18", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/psalms/chapters/18.json"}], "Schnee": [{"loc": "Ps 148", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/psalms/chapters/148.json"}, {"loc": "Job 38", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/job/chapters/38.json"}, {"loc": "Job 37", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/job/chapters/37.json"}, {"loc": "Ps 147", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/psalms/chapters/147.json"}], "Sturmwind": [{"loc": "Ps 148", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/psalms/chapters/148.json"}, {"loc": "Job 1", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/job/chapters/1.json"}], "Schlossen": [{"loc": "Ps 78", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/psalms/chapters/78.json"}], "Regenmangel": [{"loc": "2 Chr 6", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/2chronicles/chapters/6.json"}, {"loc": "Amos 4", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/amos/chapters/4.json"}], "Staubregen": [{"loc": "Dtn 28", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/deuteronomy/chapters/28.json"}], "Asche": [{"loc": "Dtn 28", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/deuteronomy/chapters/28.json"}], "Flusswasser": [{"loc": "Dtn 11", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/deuteronomy/chapters/11.json"}], "Windsturm": [{"loc": "Job 1", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/job/chapters/1.json"}], "Wolken": [{"loc": "Ps 147", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/psalms/chapters/147.json"}, {"loc": "Isa 44", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/isaiah/chapters/44.json"}, {"loc": "Isa 14", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/isaiah/chapters/14.json"}], "Frost": [{"loc": "Ps 147", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/psalms/chapters/147.json"}], "Ungewitter": [{"loc": "Ps 148", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/psalms/chapters/148.json"}], "Taumangel": [{"loc": "Hag 1", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/haggai/chapters/1.json"}], "Nebel": [{"loc": "Isa 44", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/isaiah/chapters/44.json"}], "Sturm": [{"loc": "Matt 8", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/matthew/chapters/8.json"}, {"loc": "2 Sam 22", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/2samuel/chapters/22.json"}, {"loc": "Nah 1", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/nahum/chapters/1.json"}, {"loc": "Prov 1", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/proverbs/chapters/1.json"}], "Wirbelwind": [{"loc": "Matt 8", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/matthew/chapters/8.json"}], "Wetter": [{"loc": "Nah 1", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/nahum/chapters/1.json"}, {"loc": "Prov 1", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/proverbs/chapters/1.json"}, {"loc": "Jer 25", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/jeremiah/chapters/25.json"}, {"loc": "Isa 28", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/isaiah/chapters/28.json"}, {"loc": "Zeph 1", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/zephaniah/chapters/1.json"}, {"loc": "Isa 29", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/isaiah/chapters/29.json"}], "Hitze": [{"loc": "2 Pet 3", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/2peter/chapters/3.json"}], "Hagelsturm": [{"loc": "Isa 28", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/isaiah/chapters/28.json"}], "Ungestüm": [{"loc": "Zeph 1", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/zephaniah/chapters/1.json"}], "Windwirbel": [{"loc": "Ezek 13", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/ezekiel/chapters/13.json"}], "Platzregen": [{"loc": "Ezek 13", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/ezekiel/chapters/13.json"}], "Erdbeben": [{"loc": "Isa 24", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/isaiah/chapters/24.json"}, {"loc": "Isa 29", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/isaiah/chapters/29.json"}], "Schwefel": [{"loc": "Ps 11", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/psalms/chapters/11.json"}, {"loc": "Gen 19", "url": "https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/genesis/chapters/19.json"}]};
 
+/* German weather term → KJV English search words, priority-ordered */
+const TERM_MAP = {
+  'Donner':      ['thunder','thundereth','thundered','thunderings','thunders'],
+  'Blitz':       ['lightning','lightnings','lighteneth','glittering'],
+  'Blitze':      ['lightning','lightnings'],
+  'Wind':        ['wind','winds'],
+  'Hagel':       ['hail','hailstones','hailstone'],
+  'Regen':       ['rain','rained','raineth','shower','showers'],
+  'Dürre':       ['drought','dearth','dry','dried'],
+  'Tau':         ['dew'],
+  'Feuer':       ['fire','flame','flames'],
+  'Flut':        ['flood','floods','overflow','overflowing'],
+  'Schlossen':   ['hailstones','hail'],
+  'Regenmangel': ['rain','drought'],
+  'Staubregen':  ['rain','dust','powder'],
+  'Asche':       ['ashes','ash'],
+  'Flusswasser': ['river','waters'],
+  'Windsturm':   ['whirlwind','tempest','stormy'],
+  'Sturmwind':   ['whirlwind','tempest','stormy'],
+  'Wolken':      ['cloud','clouds'],
+  'Frost':       ['frost','ice','cold'],
+  'Ungewitter':  ['tempest','thunder','storm'],
+  'Taumangel':   ['dew'],
+  'Nebel':       ['mist','vapour','vapor','fog'],
+  'Sturm':       ['storm','tempest','whirlwind'],
+  'Wirbelwind':  ['whirlwind'],
+  'Wetter':      ['weather','tempest','storm'],
+  'Hitze':       ['heat','hot'],
+  'Hagelsturm':  ['hail','tempest','storm'],
+  'Ungestüm':    ['violent','tempest','stormy'],
+  'Windwirbel':  ['whirlwind','wind'],
+  'Platzregen':  ['rain','shower','overflowing'],
+  'Erdbeben':    ['earthquake','shook','shake','quake'],
+  'Schwefel':    ['brimstone','sulphur'],
+  'Schnee':      ['snow','snowy'],
+};
+
+/* Return HTML with a 20-word window around the first found term, highlighted */
+function findContext(text, term, windowSize) {
+  windowSize = windowSize || 20;
+  const words = text.replace(/\s+/g, ' ').trim().split(' ').filter(w => w);
+
+  function esc(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+  function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  // Try mapped English terms first, then the raw input in various cases
+  const candidates = [
+    ...(TERM_MAP[term] || []),
+    term.toLowerCase(),
+    term[0].toUpperCase() + term.slice(1).toLowerCase(),
+    term.toUpperCase(),
+    term,
+  ];
+
+  for (const cand of candidates) {
+    if (!cand) continue;
+    const pat = new RegExp(esc(cand), 'i');
+    const idx = words.findIndex(w => pat.test(w));
+    if (idx === -1) continue;
+
+    const half = Math.floor(windowSize / 2);
+    const start = Math.max(0, idx - half);
+    const end   = Math.min(words.length, idx + half + 1);
+
+    const snippet = words.slice(start, end)
+      .map(w => pat.test(w) ? `<mark>${escHtml(w)}</mark>` : escHtml(w))
+      .join(' ');
+
+    return (start > 0 ? '…\u202f' : '') + snippet + (end < words.length ? '\u202f…' : '');
+  }
+
+  // Fallback: first windowSize words, no highlight
+  return words.slice(0, windowSize).map(escHtml).join(' ') +
+         (words.length > windowSize ? '\u202f…' : '');
+}
+
 function extractText(json) {
   if (json?.data && Array.isArray(json.data)) return json.data.map(v => v.text || '').join(' ');
   if (Array.isArray(json)) return json.map(v => v.text || '').join(' ');
@@ -227,11 +312,10 @@ function ask() {
     fetch(url)
       .then(r => r.json())
       .then(data => {
-        let text = extractText(data);
-        if (text.length > 300) text = text.slice(0, 297) + '…';
+        const text = extractText(data);
         const vt = card.querySelector('.verse-text');
         vt.classList.remove('loading');
-        vt.textContent = text || '(no text found)';
+        vt.innerHTML = text ? findContext(text, ph, 20) : '(no text found)';
       })
       .catch(() => {
         const vt = card.querySelector('.verse-text');
