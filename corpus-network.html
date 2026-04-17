@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Little Ice Age — Corpus Network</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --black:  #111111;
+    --dark:   #1a1a1a;
+    --panel:  #161616;
+    --border: #2a2a2a;
+    --red:    #8b1a1a;
+    --red-lt: #b52222;
+    --grey1:  #888888;
+    --grey2:  #555555;
+    --text:   #cccccc;
+    --white:  #f0f0f0;
+    --blue-lt:#3a7ab8;
+    --amber-lt:#c4881a;
+  }
+  html, body {
+    height: 100vh; background: var(--black); color: var(--text);
+    font-family: Georgia, serif;
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  header {
+    flex-shrink: 0; height: 52px; background: var(--dark);
+    border-bottom: 2px solid var(--red);
+    display: flex; align-items: center; padding: 0 24px; gap: 12px;
+  }
+  header h1 { font-size: 1rem; font-weight: normal; letter-spacing: .12em; text-transform: uppercase; color: var(--white); }
+  header .sub { font-size: .8rem; color: var(--grey1); font-style: italic; }
+  header .back {
+    margin-left: auto; font-size: .75rem; color: var(--grey2);
+    font-family: 'Courier New', monospace; letter-spacing: .07em;
+    text-transform: uppercase; text-decoration: none; transition: color .15s;
+  }
+  header .back:hover { color: var(--red-lt); }
+
+  #network { flex: 1; position: relative; overflow: hidden; }
+
+  #edge-canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    pointer-events: none;
+  }
+  #graph {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    display: block; cursor: grab; background: transparent;
+  }
+  #graph:active { cursor: grabbing; }
+
+  .node circle  { cursor: pointer; }
+  .node.Predigt     circle { fill: #8b1a1a; stroke: #c43030; stroke-width: 2; }
+  .node.Bibelstelle circle { fill: #1a4a7a; stroke: #3a7ab8; stroke-width: 1; }
+  .node.Wetter      circle { fill: #6a3e0c; stroke: #c4881a; stroke-width: 1.5; }
+  .node.dimmed      circle { opacity: 0.08; }
+  .node.dimmed      svg    { opacity: 0.08; }
+  .node.highlighted circle { stroke: var(--white) !important; stroke-width: 2.5 !important; }
+
+  #tooltip {
+    position: absolute; background: var(--panel);
+    border: 1px solid var(--border); border-left: 3px solid var(--red);
+    padding: .45rem .85rem; font-family: 'Courier New', monospace;
+    font-size: .72rem; color: var(--text); pointer-events: none;
+    opacity: 0; transition: opacity .1s; max-width: 280px;
+    letter-spacing: .04em; line-height: 1.55; z-index: 10;
+  }
+  #tooltip .tt-type  { font-size: .6rem; text-transform: uppercase; letter-spacing: .14em; margin-bottom: .15rem; }
+  #tooltip .tt-type.Predigt     { color: #c43030; }
+  #tooltip .tt-type.Bibelstelle { color: var(--blue-lt); }
+  #tooltip .tt-type.Wetter      { color: var(--amber-lt); }
+  #tooltip .tt-name  { color: var(--white); }
+  #tooltip .tt-count { color: var(--grey2); margin-top: .12rem; font-size: .65rem; }
+
+  #legend {
+    position: absolute; bottom: 1.1rem; left: 1.1rem;
+    background: rgba(22,22,22,.92); border: 1px solid var(--border);
+    padding: .6rem .9rem; font-family: 'Courier New', monospace;
+    font-size: .67rem; color: var(--grey2); letter-spacing: .08em;
+    line-height: 2; pointer-events: none; display: none;
+  }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; vertical-align: middle; }
+  .dot.Predigt     { background: #8b1a1a; border: 1.5px solid #c43030; }
+  .dot.Bibelstelle { background: #1a4a7a; border: 1px solid #3a7ab8; }
+  .dot.Wetter      { background: #6a3e0c; border: 1.5px solid #c4881a; }
+
+  #stats {
+    position: absolute; top: .8rem; right: 1.1rem;
+    font-family: 'Courier New', monospace; font-size: .65rem;
+    color: var(--grey2); letter-spacing: .09em; pointer-events: none;
+  }
+  #loading {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Courier New', monospace; font-size: .78rem;
+    letter-spacing: .18em; text-transform: uppercase; color: var(--grey2);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Little Ice Age</h1>
+  <span class="sub">Corpus Network</span>
+  <a class="back" href="index.html">&#8592; Home</a>
+</header>
+
+<div id="network">
+  <canvas id="edge-canvas"></canvas>
+  <svg id="graph"></svg>
+  <div id="tooltip"></div>
+  <div id="loading">Loading network&hellip;</div>
+  <div id="legend">
+    <div><span class="dot Predigt"></span>Predigt <span style="color:#444">(size = connections)</span></div>
+    <div><span class="dot Bibelstelle"></span>Bibelstelle <span style="color:#444">(size = connections)</span></div>
+    <div><span class="dot Wetter"></span>Wetterdaten</div>
+    <div style="margin-top:.3rem;color:#333;font-size:.6rem">Scroll: zoom &middot; drag: pan/node &middot; hover: label</div>
+  </div>
+  <div id="stats"></div>
+</div>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+/* ── Weather icon SVG strings (full self-contained SVG, parsed via DOMParser) ── */
+const ICON_SVG = {
+  lightning: '<polyline points="11,2 6,11 10,11 9,18 14,9 10,9"/>',
+  snow: '<line x1="10" y1="2" x2="10" y2="18"/><line x1="2" y1="10" x2="18" y2="10"/><line x1="4" y1="4" x2="16" y2="16"/><line x1="16" y1="4" x2="4" y2="16"/><line x1="10" y1="5" x2="8" y2="3"/><line x1="10" y1="5" x2="12" y2="3"/><line x1="10" y1="15" x2="8" y2="17"/><line x1="10" y1="15" x2="12" y2="17"/>',
+  rain: '<path d="M5,10 Q5,5 10,5 Q14,5 14,9 Q17,9 17,12 Q17,14 14,14 L6,14 Q3,14 3,11 Q3,9 5,10Z"/><line x1="7" y1="16" x2="6" y2="19"/><line x1="10" y1="16" x2="9" y2="19"/><line x1="13" y1="16" x2="12" y2="19"/>',
+  wind: '<path d="M2,7 Q7,5 12,7 Q15,8 17,7 Q19,6 18,4 Q17,2 15,3"/><path d="M2,10 Q8,8 14,10 Q17,11 18,10"/><path d="M2,13 Q7,11 11,13 Q13,14 15,13 Q17,12 17,15 Q17,17 15,17"/>',
+  flood: '<path d="M2,8 Q5,5 8,8 Q11,11 14,8 Q17,5 18,8"/><path d="M2,13 Q5,10 8,13 Q11,16 14,13 Q17,10 18,13"/>',
+  thermo: '<path d="M10,2 Q7,2 7,7 L7,13 Q7,17 10,17 Q13,17 13,13 L13,7 Q13,2 10,2Z"/><circle cx="10" cy="14" r="2" fill="rgba(255,220,140,0.9)" stroke="none"/><line x1="10" y1="12" x2="10" y2="6"/>',
+  cloud: '<path d="M5,14 Q2,14 2,11 Q2,8 5,8 Q5,5 8,5 Q11,5 12,7 Q14,6 16,8 Q18,8 18,11 Q18,14 15,14Z"/>',
+  fog: '<line x1="3" y1="7" x2="17" y2="7"/><line x1="5" y1="10" x2="15" y2="10"/><line x1="3" y1="13" x2="14" y2="13"/>',
+};
+
+const WETTER_ICON = {
+  Donner:'lightning', Blitz:'lightning', Blitze:'lightning',
+  Hagel:'lightning', Hagelsturm:'lightning', Schlossen:'lightning',
+  Ungewitter:'lightning', Feuer:'lightning',
+  Schnee:'snow', Frost:'snow',
+  Regen:'rain', Platzregen:'rain', Staubregen:'rain',
+  Regenmangel:'rain', Tau:'rain', Taumangel:'rain',
+  Wind:'wind', Sturm:'wind', Sturmwind:'wind',
+  Windsturm:'wind', Wirbelwind:'wind', Windwirbel:'wind',
+  Flut:'flood', Flusswasser:'flood',
+  Hitze:'thermo', Asche:'thermo', Schwefel:'thermo',
+  Nebel:'fog',
+  Wolken:'cloud', Wetter:'cloud', Erdbeben:'cloud', Ungest\u00fcm:'wind', D\u00fcrre:'thermo',
+};
+
+/* Build a weather icon SVG element via DOMParser (cross-browser safe) */
+function makeWetterIcon(id, r) {
+  const key  = WETTER_ICON[id] || 'cloud';
+  const size = r * 1.3;
+  const half = size / 2;
+  const xmlStr = [
+    '<svg xmlns="http://www.w3.org/2000/svg"',
+    ' viewBox="0 0 20 20"',
+    ' width="' + size + '" height="' + size + '"',
+    ' x="' + (-half) + '" y="' + (-half) + '"',
+    ' fill="none"',
+    ' stroke="rgba(255,220,140,0.9)"',
+    ' stroke-width="2"',
+    ' stroke-linecap="round"',
+    ' stroke-linejoin="round">',
+    ICON_SVG[key] || ICON_SVG.cloud,
+    '</svg>',
+  ].join('');
+  const parser = new DOMParser();
+  const doc    = parser.parseFromString(xmlStr, 'image/svg+xml');
+  return document.importNode(doc.documentElement, true);
+}
+
+/* ── Main ── */
+(function () {
+  const canvas  = document.getElementById('edge-canvas');
+  const svgEl   = d3.select('#graph');
+  const network = document.getElementById('network');
+
+  function resizeCanvas() {
+    canvas.width  = network.clientWidth;
+    canvas.height = network.clientHeight;
+  }
+  resizeCanvas();
+
+  /* drawEdges is forward-declared so the resize handler can always call it */
+  let drawEdges = function () {};
+
+  window.addEventListener('resize', function () { resizeCanvas(); drawEdges(); });
+
+  const W = function () { return network.clientWidth; };
+  const H = function () { return network.clientHeight; };
+
+  function nid(n) { return typeof n === 'object' ? n.id : n; }
+
+  var nodesRaw = [{"Id": "1 Kor 10", "Label": "1 Kor 10", "Type": "Bibelstelle"}, {"Id": "1 Kor 3", "Label": "1 Kor 3", "Type": "Bibelstelle"}, {"Id": "1 Kön 13", "Label": "1 Kön 13", "Type": "Bibelstelle"}, {"Id": "1 Kön 19", "Label": "1 Kön 19", "Type": "Bibelstelle"}, {"Id": "1 Kön 22", "Label": "1 Kön 22", "Type": "Bibelstelle"}, {"Id": "1 Petr 5", "Label": "1 Petr 5", "Type": "Bibelstelle"}, {"Id": "1 Sam 12", "Label": "1 Sam 12", "Type": "Bibelstelle"}, {"Id": "1 Sam 2", "Label": "1 Sam 2", "Type": "Bibelstelle"}, {"Id": "1 Sam 28", "Label": "1 Sam 28", "Type": "Bibelstelle"}, {"Id": "1 Sam 3", "Label": "1 Sam 3", "Type": "Bibelstelle"}, {"Id": "1 Sam 4", "Label": "1 Sam 4", "Type": "Bibelstelle"}, {"Id": "1 Sam 6", "Label": "1 Sam 6", "Type": "Bibelstelle"}, {"Id": "1 Sam 7", "Label": "1 Sam 7", "Type": "Bibelstelle"}, {"Id": "1 Tim 2", "Label": "1 Tim 2", "Type": "Bibelstelle"}, {"Id": "1. Kor 3", "Label": "1. Kor 3", "Type": "Bibelstelle"}, {"Id": "1. Kön 18", "Label": "1. Kön 18", "Type": "Bibelstelle"}, {"Id": "1. Tim 4", "Label": "1. Tim 4", "Type": "Bibelstelle"}, {"Id": "1556_Rörer", "Label": "1556_Rörer", "Type": "Predigt"}, {"Id": "1562_Alber", "Label": "1562_Alber", "Type": "Predigt"}, {"Id": "1571_Lavater", "Label": "1571_Lavater", "Type": "Predigt"}, {"Id": "1599_Fabricius", "Label": "1599_Fabricius", "Type": "Predigt"}, {"Id": "1616_Titius", "Label": "1616_Titius", "Type": "Predigt"}, {"Id": "1639_Reinhold", "Label": "1639_Reinhold", "Type": "Predigt"}, {"Id": "1658_Tappe", "Label": "1658_Tappe", "Type": "Predigt"}, {"Id": "2 Kor 9", "Label": "2 Kor 9", "Type": "Bibelstelle"}, {"Id": "2 Kön 21", "Label": "2 Kön 21", "Type": "Bibelstelle"}, {"Id": "2 Petr 3", "Label": "2 Petr 3", "Type": "Bibelstelle"}, {"Id": "2 Sam 1", "Label": "2 Sam 1", "Type": "Bibelstelle"}, {"Id": "2 Sam 18", "Label": "2 Sam 18", "Type": "Bibelstelle"}, {"Id": "2 Sam 22", "Label": "2 Sam 22", "Type": "Bibelstelle"}, {"Id": "2 Sam 24", "Label": "2 Sam 24", "Type": "Bibelstelle"}, {"Id": "2 Sam 7", "Label": "2 Sam 7", "Type": "Bibelstelle"}, {"Id": "2. Chr 6", "Label": "2. Chr 6", "Type": "Bibelstelle"}, {"Id": "2. Kön 18", "Label": "2. Kön 18", "Type": "Bibelstelle"}, {"Id": "2. Kön 6", "Label": "2. Kön 6", "Type": "Bibelstelle"}, {"Id": "2. Kön 8", "Label": "2. Kön 8", "Type": "Bibelstelle"}, {"Id": "Am 3", "Label": "Am 3", "Type": "Bibelstelle"}, {"Id": "Am 4", "Label": "Am 4", "Type": "Bibelstelle"}, {"Id": "Am 9", "Label": "Am 9", "Type": "Bibelstelle"}, {"Id": "Amos 4", "Label": "Amos 4", "Type": "Bibelstelle"}, {"Id": "Apg 11", "Label": "Apg 11", "Type": "Bibelstelle"}, {"Id": "Apg 4", "Label": "Apg 4", "Type": "Bibelstelle"}, {"Id": "Asche", "Label": "Asche", "Type": "Wetter"}, {"Id": "Blitz", "Label": "Blitz", "Type": "Wetter"}, {"Id": "Blitze", "Label": "Blitze", "Type": "Wetter"}, {"Id": "Donner", "Label": "Donner", "Type": "Wetter"}, {"Id": "Dtn 11", "Label": "Dtn 11", "Type": "Bibelstelle"}, {"Id": "Dtn 18", "Label": "Dtn 18", "Type": "Bibelstelle"}, {"Id": "Dtn 28", "Label": "Dtn 28", "Type": "Bibelstelle"}, {"Id": "Dtn 32", "Label": "Dtn 32", "Type": "Bibelstelle"}, {"Id": "Dtn 8", "Label": "Dtn 8", "Type": "Bibelstelle"}, {"Id": "Dürre", "Label": "Dürre", "Type": "Wetter"}, {"Id": "Eph 2", "Label": "Eph 2", "Type": "Bibelstelle"}, {"Id": "Eph 4", "Label": "Eph 4", "Type": "Bibelstelle"}, {"Id": "Eph 5", "Label": "Eph 5", "Type": "Bibelstelle"}, {"Id": "Eph 6", "Label": "Eph 6", "Type": "Bibelstelle"}, {"Id": "Erdbeben", "Label": "Erdbeben", "Type": "Wetter"}, {"Id": "Ex 10", "Label": "Ex 10", "Type": "Bibelstelle"}, {"Id": "Ex 20", "Label": "Ex 20", "Type": "Bibelstelle"}, {"Id": "Ex 22", "Label": "Ex 22", "Type": "Bibelstelle"}, {"Id": "Ex 8", "Label": "Ex 8", "Type": "Bibelstelle"}, {"Id": "Ex 9", "Label": "Ex 9", "Type": "Bibelstelle"}, {"Id": "Ez 13", "Label": "Ez 13", "Type": "Bibelstelle"}, {"Id": "Ez 16", "Label": "Ez 16", "Type": "Bibelstelle"}, {"Id": "Ez 33", "Label": "Ez 33", "Type": "Bibelstelle"}, {"Id": "Ez 5", "Label": "Ez 5", "Type": "Bibelstelle"}, {"Id": "Feuer", "Label": "Feuer", "Type": "Wetter"}, {"Id": "Flusswasser", "Label": "Flusswasser", "Type": "Wetter"}, {"Id": "Flut", "Label": "Flut", "Type": "Wetter"}, {"Id": "Frost", "Label": "Frost", "Type": "Wetter"}, {"Id": "Gen 1", "Label": "Gen 1", "Type": "Bibelstelle"}, {"Id": "Gen 11", "Label": "Gen 11", "Type": "Bibelstelle"}, {"Id": "Gen 19", "Label": "Gen 19", "Type": "Bibelstelle"}, {"Id": "Gen 35", "Label": "Gen 35", "Type": "Bibelstelle"}, {"Id": "Gen 41", "Label": "Gen 41", "Type": "Bibelstelle"}, {"Id": "Gen 47", "Label": "Gen 47", "Type": "Bibelstelle"}, {"Id": "Hab 2", "Label": "Hab 2", "Type": "Bibelstelle"}, {"Id": "Hab 3", "Label": "Hab 3", "Type": "Bibelstelle"}, {"Id": "Hag 1", "Label": "Hag 1", "Type": "Bibelstelle"}, {"Id": "Hag 2", "Label": "Hag 2", "Type": "Bibelstelle"}, {"Id": "Hagel", "Label": "Hagel", "Type": "Wetter"}, {"Id": "Hagelsturm", "Label": "Hagelsturm", "Type": "Wetter"}, {"Id": "Hebr 1", "Label": "Hebr 1", "Type": "Bibelstelle"}, {"Id": "Hebr 9", "Label": "Hebr 9", "Type": "Bibelstelle"}, {"Id": "Hes 14", "Label": "Hes 14", "Type": "Bibelstelle"}, {"Id": "Hes 36", "Label": "Hes 36", "Type": "Bibelstelle"}, {"Id": "Hes 4", "Label": "Hes 4", "Type": "Bibelstelle"}, {"Id": "Hes 5", "Label": "Hes 5", "Type": "Bibelstelle"}, {"Id": "Hes 7", "Label": "Hes 7", "Type": "Bibelstelle"}, {"Id": "Hiob 1", "Label": "Hiob 1", "Type": "Bibelstelle"}, {"Id": "Hiob 14", "Label": "Hiob 14", "Type": "Bibelstelle"}, {"Id": "Hiob 26", "Label": "Hiob 26", "Type": "Bibelstelle"}, {"Id": "Hiob 36", "Label": "Hiob 36", "Type": "Bibelstelle"}, {"Id": "Hiob 37", "Label": "Hiob 37", "Type": "Bibelstelle"}, {"Id": "Hiob 38", "Label": "Hiob 38", "Type": "Bibelstelle"}, {"Id": "Hiob 40", "Label": "Hiob 40", "Type": "Bibelstelle"}, {"Id": "Hitze", "Label": "Hitze", "Type": "Wetter"}, {"Id": "Hos 4", "Label": "Hos 4", "Type": "Bibelstelle"}, {"Id": "Jak 4", "Label": "Jak 4", "Type": "Bibelstelle"}, {"Id": "Jak 5", "Label": "Jak 5", "Type": "Bibelstelle"}, {"Id": "Jer 10", "Label": "Jer 10", "Type": "Bibelstelle"}, {"Id": "Jer 11", "Label": "Jer 11", "Type": "Bibelstelle"}, {"Id": "Jer 14", "Label": "Jer 14", "Type": "Bibelstelle"}, {"Id": "Jer 17", "Label": "Jer 17", "Type": "Bibelstelle"}, {"Id": "Jer 18", "Label": "Jer 18", "Type": "Bibelstelle"}, {"Id": "Jer 2", "Label": "Jer 2", "Type": "Bibelstelle"}, {"Id": "Jer 25", "Label": "Jer 25", "Type": "Bibelstelle"}, {"Id": "Jer 30", "Label": "Jer 30", "Type": "Bibelstelle"}, {"Id": "Jer 42", "Label": "Jer 42", "Type": "Bibelstelle"}, {"Id": "Jer 5", "Label": "Jer 5", "Type": "Bibelstelle"}, {"Id": "Jer 51", "Label": "Jer 51", "Type": "Bibelstelle"}, {"Id": "Jer 8", "Label": "Jer 8", "Type": "Bibelstelle"}, {"Id": "Jes 1", "Label": "Jes 1", "Type": "Bibelstelle"}, {"Id": "Jes 14", "Label": "Jes 14", "Type": "Bibelstelle"}, {"Id": "Jes 24", "Label": "Jes 24", "Type": "Bibelstelle"}, {"Id": "Jes 26", "Label": "Jes 26", "Type": "Bibelstelle"}, {"Id": "Jes 28", "Label": "Jes 28", "Type": "Bibelstelle"}, {"Id": "Jes 29", "Label": "Jes 29", "Type": "Bibelstelle"}, {"Id": "Jes 3", "Label": "Jes 3", "Type": "Bibelstelle"}, {"Id": "Jes 30", "Label": "Jes 30", "Type": "Bibelstelle"}, {"Id": "Jes 38", "Label": "Jes 38", "Type": "Bibelstelle"}, {"Id": "Jes 44", "Label": "Jes 44", "Type": "Bibelstelle"}, {"Id": "Jes 45", "Label": "Jes 45", "Type": "Bibelstelle"}, {"Id": "Jes 5", "Label": "Jes 5", "Type": "Bibelstelle"}, {"Id": "Jes 50", "Label": "Jes 50", "Type": "Bibelstelle"}, {"Id": "Jes 51", "Label": "Jes 51", "Type": "Bibelstelle"}, {"Id": "Jes 55", "Label": "Jes 55", "Type": "Bibelstelle"}, {"Id": "Jes 57", "Label": "Jes 57", "Type": "Bibelstelle"}, {"Id": "Jes 63", "Label": "Jes 63", "Type": "Bibelstelle"}, {"Id": "Jes 8", "Label": "Jes 8", "Type": "Bibelstelle"}, {"Id": "Joel 1", "Label": "Joel 1", "Type": "Bibelstelle"}, {"Id": "Joel 2", "Label": "Joel 2", "Type": "Bibelstelle"}, {"Id": "Joh 1", "Label": "Joh 1", "Type": "Bibelstelle"}, {"Id": "Joh 10", "Label": "Joh 10", "Type": "Bibelstelle"}, {"Id": "Joh 16", "Label": "Joh 16", "Type": "Bibelstelle"}, {"Id": "Joh 17", "Label": "Joh 17", "Type": "Bibelstelle"}, {"Id": "Joh 5", "Label": "Joh 5", "Type": "Bibelstelle"}, {"Id": "Joh 8", "Label": "Joh 8", "Type": "Bibelstelle"}, {"Id": "Joh 9", "Label": "Joh 9", "Type": "Bibelstelle"}, {"Id": "Jos 10", "Label": "Jos 10", "Type": "Bibelstelle"}, {"Id": "Jos 7", "Label": "Jos 7", "Type": "Bibelstelle"}, {"Id": "Klag 3", "Label": "Klag 3", "Type": "Bibelstelle"}, {"Id": "Klgl 3", "Label": "Klgl 3", "Type": "Bibelstelle"}, {"Id": "Klgl 4", "Label": "Klgl 4", "Type": "Bibelstelle"}, {"Id": "Koh 7", "Label": "Koh 7", "Type": "Bibelstelle"}, {"Id": "Kol 3", "Label": "Kol 3", "Type": "Bibelstelle"}, {"Id": "Lev 19", "Label": "Lev 19", "Type": "Bibelstelle"}, {"Id": "Lev 20", "Label": "Lev 20", "Type": "Bibelstelle"}, {"Id": "Lev 23", "Label": "Lev 23", "Type": "Bibelstelle"}, {"Id": "Lev 26", "Label": "Lev 26", "Type": "Bibelstelle"}, {"Id": "Lk 1", "Label": "Lk 1", "Type": "Bibelstelle"}, {"Id": "Lk 10", "Label": "Lk 10", "Type": "Bibelstelle"}, {"Id": "Lk 12", "Label": "Lk 12", "Type": "Bibelstelle"}, {"Id": "Lk 13", "Label": "Lk 13", "Type": "Bibelstelle"}, {"Id": "Lk 15", "Label": "Lk 15", "Type": "Bibelstelle"}, {"Id": "Lk 16", "Label": "Lk 16", "Type": "Bibelstelle"}, {"Id": "Lk 18", "Label": "Lk 18", "Type": "Bibelstelle"}, {"Id": "Lk 19", "Label": "Lk 19", "Type": "Bibelstelle"}, {"Id": "Lk 2", "Label": "Lk 2", "Type": "Bibelstelle"}, {"Id": "Lk 21", "Label": "Lk 21", "Type": "Bibelstelle"}, {"Id": "Lk 22", "Label": "Lk 22", "Type": "Bibelstelle"}, {"Id": "Lk 23", "Label": "Lk 23", "Type": "Bibelstelle"}, {"Id": "Lk 3", "Label": "Lk 3", "Type": "Bibelstelle"}, {"Id": "Lk 7", "Label": "Lk 7", "Type": "Bibelstelle"}, {"Id": "Mal 3", "Label": "Mal 3", "Type": "Bibelstelle"}, {"Id": "Mi 6", "Label": "Mi 6", "Type": "Bibelstelle"}, {"Id": "Mi 7", "Label": "Mi 7", "Type": "Bibelstelle"}, {"Id": "Mic 6", "Label": "Mic 6", "Type": "Bibelstelle"}, {"Id": "Mk 13", "Label": "Mk 13", "Type": "Bibelstelle"}, {"Id": "Mk 16", "Label": "Mk 16", "Type": "Bibelstelle"}, {"Id": "Mk 3", "Label": "Mk 3", "Type": "Bibelstelle"}, {"Id": "Mt 10", "Label": "Mt 10", "Type": "Bibelstelle"}, {"Id": "Mt 11", "Label": "Mt 11", "Type": "Bibelstelle"}, {"Id": "Mt 13", "Label": "Mt 13", "Type": "Bibelstelle"}, {"Id": "Mt 16", "Label": "Mt 16", "Type": "Bibelstelle"}, {"Id": "Mt 22", "Label": "Mt 22", "Type": "Bibelstelle"}, {"Id": "Mt 23", "Label": "Mt 23", "Type": "Bibelstelle"}, {"Id": "Mt 24", "Label": "Mt 24", "Type": "Bibelstelle"}, {"Id": "Mt 25", "Label": "Mt 25", "Type": "Bibelstelle"}, {"Id": "Mt 26", "Label": "Mt 26", "Type": "Bibelstelle"}, {"Id": "Mt 28", "Label": "Mt 28", "Type": "Bibelstelle"}, {"Id": "Mt 6", "Label": "Mt 6", "Type": "Bibelstelle"}, {"Id": "Mt 7", "Label": "Mt 7", "Type": "Bibelstelle"}, {"Id": "Mt 8", "Label": "Mt 8", "Type": "Bibelstelle"}, {"Id": "Nah 1", "Label": "Nah 1", "Type": "Bibelstelle"}, {"Id": "Nebel", "Label": "Nebel", "Type": "Wetter"}, {"Id": "Neh 5", "Label": "Neh 5", "Type": "Bibelstelle"}, {"Id": "Num 23", "Label": "Num 23", "Type": "Bibelstelle"}, {"Id": "Num 26", "Label": "Num 26", "Type": "Bibelstelle"}, {"Id": "Offb 16", "Label": "Offb 16", "Type": "Bibelstelle"}, {"Id": "Phil 1", "Label": "Phil 1", "Type": "Bibelstelle"}, {"Id": "Phil 2", "Label": "Phil 2", "Type": "Bibelstelle"}, {"Id": "Platzregen", "Label": "Platzregen", "Type": "Wetter"}, {"Id": "Pred 1", "Label": "Pred 1", "Type": "Bibelstelle"}, {"Id": "Pred 11", "Label": "Pred 11", "Type": "Bibelstelle"}, {"Id": "Pred 12", "Label": "Pred 12", "Type": "Bibelstelle"}, {"Id": "Pred 3", "Label": "Pred 3", "Type": "Bibelstelle"}, {"Id": "Pred 7", "Label": "Pred 7", "Type": "Bibelstelle"}, {"Id": "Pred 8", "Label": "Pred 8", "Type": "Bibelstelle"}, {"Id": "Pred 9", "Label": "Pred 9", "Type": "Bibelstelle"}, {"Id": "Ps 104", "Label": "Ps 104", "Type": "Bibelstelle"}, {"Id": "Ps 105", "Label": "Ps 105", "Type": "Bibelstelle"}, {"Id": "Ps 11", "Label": "Ps 11", "Type": "Bibelstelle"}, {"Id": "Ps 112", "Label": "Ps 112", "Type": "Bibelstelle"}, {"Id": "Ps 116", "Label": "Ps 116", "Type": "Bibelstelle"}, {"Id": "Ps 121", "Label": "Ps 121", "Type": "Bibelstelle"}, {"Id": "Ps 144", "Label": "Ps 144", "Type": "Bibelstelle"}, {"Id": "Ps 146", "Label": "Ps 146", "Type": "Bibelstelle"}, {"Id": "Ps 147", "Label": "Ps 147", "Type": "Bibelstelle"}, {"Id": "Ps 148", "Label": "Ps 148", "Type": "Bibelstelle"}, {"Id": "Ps 18", "Label": "Ps 18", "Type": "Bibelstelle"}, {"Id": "Ps 19", "Label": "Ps 19", "Type": "Bibelstelle"}, {"Id": "Ps 2", "Label": "Ps 2", "Type": "Bibelstelle"}, {"Id": "Ps 29", "Label": "Ps 29", "Type": "Bibelstelle"}, {"Id": "Ps 31", "Label": "Ps 31", "Type": "Bibelstelle"}, {"Id": "Ps 32", "Label": "Ps 32", "Type": "Bibelstelle"}, {"Id": "Ps 39", "Label": "Ps 39", "Type": "Bibelstelle"}, {"Id": "Ps 4", "Label": "Ps 4", "Type": "Bibelstelle"}, {"Id": "Ps 45", "Label": "Ps 45", "Type": "Bibelstelle"}, {"Id": "Ps 5", "Label": "Ps 5", "Type": "Bibelstelle"}, {"Id": "Ps 50", "Label": "Ps 50", "Type": "Bibelstelle"}, {"Id": "Ps 68", "Label": "Ps 68", "Type": "Bibelstelle"}, {"Id": "Ps 73", "Label": "Ps 73", "Type": "Bibelstelle"}, {"Id": "Ps 76", "Label": "Ps 76", "Type": "Bibelstelle"}, {"Id": "Ps 77", "Label": "Ps 77", "Type": "Bibelstelle"}, {"Id": "Ps 78", "Label": "Ps 78", "Type": "Bibelstelle"}, {"Id": "Ps 90", "Label": "Ps 90", "Type": "Bibelstelle"}, {"Id": "Ps 91", "Label": "Ps 91", "Type": "Bibelstelle"}, {"Id": "Ps 95", "Label": "Ps 95", "Type": "Bibelstelle"}, {"Id": "Regen", "Label": "Regen", "Type": "Wetter"}, {"Id": "Regenmangel", "Label": "Regenmangel", "Type": "Wetter"}, {"Id": "Ri 15", "Label": "Ri 15", "Type": "Bibelstelle"}, {"Id": "Ri 16", "Label": "Ri 16", "Type": "Bibelstelle"}, {"Id": "Röm 10", "Label": "Röm 10", "Type": "Bibelstelle"}, {"Id": "Röm 11", "Label": "Röm 11", "Type": "Bibelstelle"}, {"Id": "Röm 14", "Label": "Röm 14", "Type": "Bibelstelle"}, {"Id": "Röm 4", "Label": "Röm 4", "Type": "Bibelstelle"}, {"Id": "Röm 6", "Label": "Röm 6", "Type": "Bibelstelle"}, {"Id": "Röm 8", "Label": "Röm 8", "Type": "Bibelstelle"}, {"Id": "Schlossen", "Label": "Schlossen", "Type": "Wetter"}, {"Id": "Schnee", "Label": "Schnee", "Type": "Wetter"}, {"Id": "Schwefel", "Label": "Schwefel", "Type": "Wetter"}, {"Id": "Sir 1", "Label": "Sir 1", "Type": "Bibelstelle"}, {"Id": "Sir 10", "Label": "Sir 10", "Type": "Bibelstelle"}, {"Id": "Sir 11", "Label": "Sir 11", "Type": "Bibelstelle"}, {"Id": "Sir 25", "Label": "Sir 25", "Type": "Bibelstelle"}, {"Id": "Sir 38", "Label": "Sir 38", "Type": "Bibelstelle"}, {"Id": "Sir 4", "Label": "Sir 4", "Type": "Bibelstelle"}, {"Id": "Sir 40", "Label": "Sir 40", "Type": "Bibelstelle"}, {"Id": "Sir 41", "Label": "Sir 41", "Type": "Bibelstelle"}, {"Id": "Spr 1", "Label": "Spr 1", "Type": "Bibelstelle"}, {"Id": "Spr 15", "Label": "Spr 15", "Type": "Bibelstelle"}, {"Id": "Spr 16", "Label": "Spr 16", "Type": "Bibelstelle"}, {"Id": "Spr 25", "Label": "Spr 25", "Type": "Bibelstelle"}, {"Id": "Spr 28", "Label": "Spr 28", "Type": "Bibelstelle"}, {"Id": "Spr 30", "Label": "Spr 30", "Type": "Bibelstelle"}, {"Id": "Spr 8", "Label": "Spr 8", "Type": "Bibelstelle"}, {"Id": "Staubregen", "Label": "Staubregen", "Type": "Wetter"}, {"Id": "Sturm", "Label": "Sturm", "Type": "Wetter"}, {"Id": "Sturmwind", "Label": "Sturmwind", "Type": "Wetter"}, {"Id": "Tau", "Label": "Tau", "Type": "Wetter"}, {"Id": "Taumangel", "Label": "Taumangel", "Type": "Wetter"}, {"Id": "Ungestüm", "Label": "Ungestüm", "Type": "Wetter"}, {"Id": "Ungewitter", "Label": "Ungewitter", "Type": "Wetter"}, {"Id": "Weish 2", "Label": "Weish 2", "Type": "Bibelstelle"}, {"Id": "Weish 3", "Label": "Weish 3", "Type": "Bibelstelle"}, {"Id": "Weish 5", "Label": "Weish 5", "Type": "Bibelstelle"}, {"Id": "Weish 9", "Label": "Weish 9", "Type": "Bibelstelle"}, {"Id": "Wetter", "Label": "Wetter", "Type": "Wetter"}, {"Id": "Wind", "Label": "Wind", "Type": "Wetter"}, {"Id": "Windsturm", "Label": "Windsturm", "Type": "Wetter"}, {"Id": "Windwirbel", "Label": "Windwirbel", "Type": "Wetter"}, {"Id": "Wirbelwind", "Label": "Wirbelwind", "Type": "Wetter"}, {"Id": "Wolken", "Label": "Wolken", "Type": "Wetter"}, {"Id": "Zeph 1", "Label": "Zeph 1", "Type": "Bibelstelle"}];
+  var edgesRaw = [{"Source": "1 Sam 12", "Target": "Donner", "Type": "Undirected", "Weight": "1"}, {"Source": "1 Sam 12", "Target": "Regen", "Type": "Undirected", "Weight": "1"}, {"Source": "1 Sam 7", "Target": "Donner", "Type": "Undirected", "Weight": "1"}, {"Source": "1. Kön 18", "Target": "Dürre", "Type": "Undirected", "Weight": "1"}, {"Source": "1556_Rörer", "Target": "Amos 4", "Type": "Undirected", "Weight": "1"}, {"Source": "1556_Rörer", "Target": "Dtn 18", "Type": "Undirected", "Weight": "1"}, {"Source": "1556_Rörer", "Target": "Dtn 28", "Type": "Undirected", "Weight": "1"}, {"Source": "1556_Rörer", "Target": "Ex 20", "Type": "Undirected", "Weight": "1"}, {"Source": "1556_Rörer", "Target": "Ex 9", "Type": "Undirected", "Weight": "1"}, {"Source": "1556_Rörer", "Target": "Hag 1", "Type": "Undirected", "Weight": "1"}, {"Source": "1556_Rörer", "Target": "Hiob 1", "Type": "Undirected", "Weight": "1"}, {"Source": "1556_Rörer", "Target": "Hiob 36", "Type": "Undirected", "Weight": "1"}, {"Source": "1556_Rörer", "Target": "Hiob 37", "Type": "Undirected", "Weight": "1"}, {"Source": "1556_Rörer", "Target": "Hiob 38", "Type": "Undirected", "Weight": "1"}, {"Source": "1556_Rörer", "Target": "Jer 18", "Type": "Undirected", "Weight": "1"}, {"Source": "1556_Rörer", "Target": "Joh 16", "Type": "Undirected", "Weight": "1"}, {"Source": "1556_Rörer", "Target": "Joh 9", "Type": "Undirected", "Weight": "1"}, {"Source": "1556_Rörer", "Target": "Klgl 3", "Type": "Undirected", "Weight": "1"}, {"Source": "1556_Rörer", "Target": "Lev 26", "Type": "Undirected", "Weight": "1"}, {"Source": "1556_Rörer", "Target": "Mal 3", "Type": "Undirected", "Weight": "1"}, {"Source": "1556_Rörer", "Target": "Mi 6", "Type": "Undirected", "Weight": "1"}, {"Source": "1556_Rörer", "Target": "Mt 22", "Type": "Undirected", "Weight": "1"}, {"Source": "1556_Rörer", "Target": "Ps 5", "Type": "Undirected", "Weight": "1"}, {"Source": "1556_Rörer", "Target": "Ps 50", "Type": "Undirected", "Weight": "1"}, {"Source": "1556_Rörer", "Target": "Sir 40", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "1 Kön 22", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "1 Sam 28", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Am 3", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Am 4", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Dtn 18", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Dtn 28", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Eph 2", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Ex 20", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Ex 22", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Ex 9", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Ez 33", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Hab 3", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Hag 1", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Hag 2", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Hebr 1", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Hiob 1", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Hiob 38", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Jer 17", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Jer 30", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Jes 26", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Jes 45", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Jes 8", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Joh 5", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Jos 10", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Klag 3", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Koh 7", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Lev 19", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Lev 20", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Lev 26", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Lk 22", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Mal 3", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Mi 7", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Mt 10", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Mt 13", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Mt 8", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Num 23", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Ps 104", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Ps 148", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Ps 18", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Ps 78", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Röm 8", "Type": "Undirected", "Weight": "1"}, {"Source": "1562_Alber", "Target": "Sir 40", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "1. Kor 3", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "1. Kön 18", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "1. Tim 4", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "2. Chr 6", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "2. Kön 18", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "2. Kön 6", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "2. Kön 8", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Amos 4", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Apg 11", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Dtn 11", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Dtn 28", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Dtn 32", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Dtn 8", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Ex 10", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Gen 41", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Gen 47", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Hag 1", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Hes 14", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Hes 36", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Hes 4", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Hes 5", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Hes 7", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Hiob 1", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Hiob 37", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Hos 4", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Jak 4", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Jak 5", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Jer 11", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Jer 14", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Jer 42", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Jer 5", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Jes 3", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Jes 5", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Joel 1", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Joel 2", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Jos 7", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Klgl 4", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Lev 23", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Lev 26", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Lk 15", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Mic 6", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Mt 10", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Mt 24", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Mt 25", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Mt 8", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Neh 5", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Ps 105", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Ps 116", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Ps 147", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Ps 148", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Ri 15", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Röm 4", "Type": "Undirected", "Weight": "1"}, {"Source": "1571_Lavater", "Target": "Spr 30", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "1 Kor 3", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "1 Petr 5", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "1 Sam 2", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "2 Kor 9", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Apg 4", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Ex 20", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Ez 16", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Jes 1", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Jes 44", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Jes 63", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Joh 10", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Joh 17", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Klgl 3", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Kol 3", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Lk 1", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Lk 10", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Lk 18", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Lk 19", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Lk 3", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Mt 10", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Mt 16", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Mt 23", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Mt 25", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Mt 28", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Mt 6", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Phil 2", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Ps 11", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Ps 112", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Ps 121", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Ps 2", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Ps 45", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Ps 5", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Ps 50", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Ps 91", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Röm 10", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Röm 11", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Sir 1", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Sir 10", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Spr 15", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Spr 28", "Type": "Undirected", "Weight": "1"}, {"Source": "1599_Fabricius", "Target": "Spr 8", "Type": "Undirected", "Weight": "1"}, {"Source": "1616_Titius", "Target": "Ex 22", "Type": "Undirected", "Weight": "1"}, {"Source": "1616_Titius", "Target": "Ex 8", "Type": "Undirected", "Weight": "1"}, {"Source": "1616_Titius", "Target": "Hiob 1", "Type": "Undirected", "Weight": "1"}, {"Source": "1616_Titius", "Target": "Jak 5", "Type": "Undirected", "Weight": "1"}, {"Source": "1616_Titius", "Target": "Joh 9", "Type": "Undirected", "Weight": "1"}, {"Source": "1616_Titius", "Target": "Lev 20", "Type": "Undirected", "Weight": "1"}, {"Source": "1616_Titius", "Target": "Mt 25", "Type": "Undirected", "Weight": "1"}, {"Source": "1616_Titius", "Target": "Mt 8", "Type": "Undirected", "Weight": "1"}, {"Source": "1616_Titius", "Target": "Ps 18", "Type": "Undirected", "Weight": "1"}, {"Source": "1616_Titius", "Target": "Ps 78", "Type": "Undirected", "Weight": "1"}, {"Source": "1616_Titius", "Target": "Spr 25", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "1 Sam 12", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "1 Sam 7", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "2 Petr 3", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "2 Sam 22", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Am 9", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Dtn 32", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Ex 9", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Ez 13", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Ez 5", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Hab 2", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Hiob 26", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Hiob 36", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Hiob 37", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Hiob 40", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Hos 4", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Jer 10", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Jer 2", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Jer 25", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Jer 51", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Jes 1", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Jes 14", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Jes 24", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Jes 28", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Jes 29", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Jes 30", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Jes 50", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Jes 51", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Jes 55", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Joel 2", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Jos 10", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Lk 21", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Mi 6", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Mk 16", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Mk 3", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Mt 11", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Nah 1", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Offb 16", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Ps 104", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Ps 105", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Ps 11", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Ps 144", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Ps 147", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Ps 148", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Ps 18", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Ps 19", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Ps 29", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Ps 32", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Ps 68", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Ps 76", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Ps 77", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Ps 95", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Sir 4", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Spr 1", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Weish 5", "Type": "Undirected", "Weight": "1"}, {"Source": "1639_Reinhold", "Target": "Zeph 1", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "1 Kor 10", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "1 Kön 13", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "1 Kön 19", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "1 Sam 3", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "1 Sam 4", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "1 Sam 6", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "1 Tim 2", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "2 Kön 21", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "2 Sam 1", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "2 Sam 18", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "2 Sam 24", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "2 Sam 7", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Eph 4", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Eph 5", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Eph 6", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Gen 1", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Gen 11", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Gen 19", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Gen 35", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Hebr 9", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Hiob 1", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Hiob 14", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Jak 4", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Jer 10", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Jer 30", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Jer 8", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Jes 28", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Jes 38", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Jes 45", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Jes 57", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Joh 1", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Joh 8", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Joh 9", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Lk 12", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Lk 13", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Lk 16", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Lk 2", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Lk 23", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Lk 7", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Mk 13", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Mt 10", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Mt 24", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Mt 26", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Mt 7", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Num 26", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Phil 1", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Phil 2", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Pred 1", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Pred 11", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Pred 12", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Pred 3", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Pred 7", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Pred 8", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Pred 9", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Ps 11", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Ps 146", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Ps 31", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Ps 39", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Ps 4", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Ps 5", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Ps 73", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Ps 90", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Ps 91", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Ri 16", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Röm 14", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Röm 6", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Röm 8", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Sir 11", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Sir 25", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Sir 38", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Sir 41", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Spr 16", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Weish 2", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Weish 3", "Type": "Undirected", "Weight": "1"}, {"Source": "1658_Tappe", "Target": "Weish 9", "Type": "Undirected", "Weight": "1"}, {"Source": "2 Petr 3", "Target": "Feuer", "Type": "Undirected", "Weight": "1"}, {"Source": "2 Petr 3", "Target": "Hitze", "Type": "Undirected", "Weight": "1"}, {"Source": "2 Sam 22", "Target": "Donner", "Type": "Undirected", "Weight": "1"}, {"Source": "2 Sam 22", "Target": "Sturm", "Type": "Undirected", "Weight": "1"}, {"Source": "2. Chr 6", "Target": "Regenmangel", "Type": "Undirected", "Weight": "1"}, {"Source": "Am 4", "Target": "Regen", "Type": "Undirected", "Weight": "1"}, {"Source": "Am 9", "Target": "Flut", "Type": "Undirected", "Weight": "1"}, {"Source": "Amos 4", "Target": "Dürre", "Type": "Undirected", "Weight": "1"}, {"Source": "Amos 4", "Target": "Regen", "Type": "Undirected", "Weight": "1"}, {"Source": "Amos 4", "Target": "Regenmangel", "Type": "Undirected", "Weight": "1"}, {"Source": "Dtn 11", "Target": "Flusswasser", "Type": "Undirected", "Weight": "1"}, {"Source": "Dtn 11", "Target": "Regen", "Type": "Undirected", "Weight": "1"}, {"Source": "Dtn 28", "Target": "Asche", "Type": "Undirected", "Weight": "1"}, {"Source": "Dtn 28", "Target": "Dürre", "Type": "Undirected", "Weight": "1"}, {"Source": "Dtn 28", "Target": "Regen", "Type": "Undirected", "Weight": "1"}, {"Source": "Dtn 28", "Target": "Staubregen", "Type": "Undirected", "Weight": "1"}, {"Source": "Dtn 32", "Target": "Blitz", "Type": "Undirected", "Weight": "1"}, {"Source": "Ex 9", "Target": "Blitz", "Type": "Undirected", "Weight": "1"}, {"Source": "Ex 9", "Target": "Donner", "Type": "Undirected", "Weight": "1"}, {"Source": "Ex 9", "Target": "Feuer", "Type": "Undirected", "Weight": "1"}, {"Source": "Ex 9", "Target": "Hagel", "Type": "Undirected", "Weight": "1"}, {"Source": "Ex 9", "Target": "Regen", "Type": "Undirected", "Weight": "1"}, {"Source": "Ez 13", "Target": "Hagel", "Type": "Undirected", "Weight": "1"}, {"Source": "Ez 13", "Target": "Platzregen", "Type": "Undirected", "Weight": "1"}, {"Source": "Ez 13", "Target": "Windwirbel", "Type": "Undirected", "Weight": "1"}, {"Source": "Gen 19", "Target": "Feuer", "Type": "Undirected", "Weight": "1"}, {"Source": "Gen 19", "Target": "Schwefel", "Type": "Undirected", "Weight": "1"}, {"Source": "Hag 1", "Target": "Dürre", "Type": "Undirected", "Weight": "1"}, {"Source": "Hag 1", "Target": "Tau", "Type": "Undirected", "Weight": "1"}, {"Source": "Hag 1", "Target": "Taumangel", "Type": "Undirected", "Weight": "1"}, {"Source": "Hag 2", "Target": "Dürre", "Type": "Undirected", "Weight": "1"}, {"Source": "Hag 2", "Target": "Hagel", "Type": "Undirected", "Weight": "1"}, {"Source": "Hebr 1", "Target": "Feuer", "Type": "Undirected", "Weight": "1"}, {"Source": "Hiob 1", "Target": "Blitz", "Type": "Undirected", "Weight": "1"}, {"Source": "Hiob 1", "Target": "Feuer", "Type": "Undirected", "Weight": "1"}, {"Source": "Hiob 1", "Target": "Sturmwind", "Type": "Undirected", "Weight": "1"}, {"Source": "Hiob 1", "Target": "Wind", "Type": "Undirected", "Weight": "1"}, {"Source": "Hiob 1", "Target": "Windsturm", "Type": "Undirected", "Weight": "1"}, {"Source": "Hiob 26", "Target": "Donner", "Type": "Undirected", "Weight": "1"}, {"Source": "Hiob 36", "Target": "Blitz", "Type": "Undirected", "Weight": "1"}, {"Source": "Hiob 36", "Target": "Regen", "Type": "Undirected", "Weight": "1"}, {"Source": "Hiob 37", "Target": "Blitz", "Type": "Undirected", "Weight": "1"}, {"Source": "Hiob 37", "Target": "Donner", "Type": "Undirected", "Weight": "1"}, {"Source": "Hiob 37", "Target": "Regen", "Type": "Undirected", "Weight": "1"}, {"Source": "Hiob 37", "Target": "Schnee", "Type": "Undirected", "Weight": "1"}, {"Source": "Hiob 38", "Target": "Blitz", "Type": "Undirected", "Weight": "1"}, {"Source": "Hiob 38", "Target": "Hagel", "Type": "Undirected", "Weight": "1"}, {"Source": "Hiob 38", "Target": "Schnee", "Type": "Undirected", "Weight": "1"}, {"Source": "Hiob 40", "Target": "Donner", "Type": "Undirected", "Weight": "1"}, {"Source": "Jer 10", "Target": "Blitz", "Type": "Undirected", "Weight": "1"}, {"Source": "Jer 10", "Target": "Regen", "Type": "Undirected", "Weight": "1"}, {"Source": "Jer 10", "Target": "Wind", "Type": "Undirected", "Weight": "1"}, {"Source": "Jer 14", "Target": "Regen", "Type": "Undirected", "Weight": "1"}, {"Source": "Jer 25", "Target": "Donner", "Type": "Undirected", "Weight": "1"}, {"Source": "Jer 25", "Target": "Wetter", "Type": "Undirected", "Weight": "1"}, {"Source": "Jer 51", "Target": "Wind", "Type": "Undirected", "Weight": "1"}, {"Source": "Jes 14", "Target": "Wolken", "Type": "Undirected", "Weight": "1"}, {"Source": "Jes 24", "Target": "Erdbeben", "Type": "Undirected", "Weight": "1"}, {"Source": "Jes 24", "Target": "Flut", "Type": "Undirected", "Weight": "1"}, {"Source": "Jes 28", "Target": "Hagelsturm", "Type": "Undirected", "Weight": "1"}, {"Source": "Jes 28", "Target": "Wetter", "Type": "Undirected", "Weight": "1"}, {"Source": "Jes 29", "Target": "Donner", "Type": "Undirected", "Weight": "1"}, {"Source": "Jes 29", "Target": "Erdbeben", "Type": "Undirected", "Weight": "1"}, {"Source": "Jes 29", "Target": "Wetter", "Type": "Undirected", "Weight": "1"}, {"Source": "Jes 30", "Target": "Feuer", "Type": "Undirected", "Weight": "1"}, {"Source": "Jes 30", "Target": "Hagel", "Type": "Undirected", "Weight": "1"}, {"Source": "Jes 30", "Target": "Regen", "Type": "Undirected", "Weight": "1"}, {"Source": "Jes 44", "Target": "Nebel", "Type": "Undirected", "Weight": "1"}, {"Source": "Jes 44", "Target": "Wolken", "Type": "Undirected", "Weight": "1"}, {"Source": "Jes 50", "Target": "Dürre", "Type": "Undirected", "Weight": "1"}, {"Source": "Joel 2", "Target": "Donner", "Type": "Undirected", "Weight": "1"}, {"Source": "Joel 2", "Target": "Feuer", "Type": "Undirected", "Weight": "1"}, {"Source": "Jos 10", "Target": "Hagel", "Type": "Undirected", "Weight": "1"}, {"Source": "Lev 26", "Target": "Dürre", "Type": "Undirected", "Weight": "1"}, {"Source": "Lev 26", "Target": "Regen", "Type": "Undirected", "Weight": "1"}, {"Source": "Lk 21", "Target": "Donner", "Type": "Undirected", "Weight": "1"}, {"Source": "Mal 3", "Target": "Regen", "Type": "Undirected", "Weight": "1"}, {"Source": "Mk 3", "Target": "Donner", "Type": "Undirected", "Weight": "1"}, {"Source": "Mt 8", "Target": "Sturm", "Type": "Undirected", "Weight": "1"}, {"Source": "Mt 8", "Target": "Wirbelwind", "Type": "Undirected", "Weight": "1"}, {"Source": "Nah 1", "Target": "Sturm", "Type": "Undirected", "Weight": "1"}, {"Source": "Nah 1", "Target": "Wetter", "Type": "Undirected", "Weight": "1"}, {"Source": "Offb 16", "Target": "Blitz", "Type": "Undirected", "Weight": "1"}, {"Source": "Offb 16", "Target": "Donner", "Type": "Undirected", "Weight": "1"}, {"Source": "Ps 104", "Target": "Donner", "Type": "Undirected", "Weight": "1"}, {"Source": "Ps 104", "Target": "Feuer", "Type": "Undirected", "Weight": "1"}, {"Source": "Ps 104", "Target": "Wind", "Type": "Undirected", "Weight": "1"}, {"Source": "Ps 105", "Target": "Feuer", "Type": "Undirected", "Weight": "1"}, {"Source": "Ps 105", "Target": "Hagel", "Type": "Undirected", "Weight": "1"}, {"Source": "Ps 105", "Target": "Regen", "Type": "Undirected", "Weight": "1"}, {"Source": "Ps 11", "Target": "Blitz", "Type": "Undirected", "Weight": "1"}, {"Source": "Ps 11", "Target": "Feuer", "Type": "Undirected", "Weight": "1"}, {"Source": "Ps 11", "Target": "Schwefel", "Type": "Undirected", "Weight": "1"}, {"Source": "Ps 144", "Target": "Blitz", "Type": "Undirected", "Weight": "1"}, {"Source": "Ps 147", "Target": "Frost", "Type": "Undirected", "Weight": "1"}, {"Source": "Ps 147", "Target": "Hagel", "Type": "Undirected", "Weight": "1"}, {"Source": "Ps 147", "Target": "Regen", "Type": "Undirected", "Weight": "1"}, {"Source": "Ps 147", "Target": "Schnee", "Type": "Undirected", "Weight": "1"}, {"Source": "Ps 147", "Target": "Wolken", "Type": "Undirected", "Weight": "1"}, {"Source": "Ps 148", "Target": "Feuer", "Type": "Undirected", "Weight": "1"}, {"Source": "Ps 148", "Target": "Hagel", "Type": "Undirected", "Weight": "1"}, {"Source": "Ps 148", "Target": "Schnee", "Type": "Undirected", "Weight": "1"}, {"Source": "Ps 148", "Target": "Sturmwind", "Type": "Undirected", "Weight": "1"}, {"Source": "Ps 148", "Target": "Ungewitter", "Type": "Undirected", "Weight": "1"}, {"Source": "Ps 148", "Target": "Wind", "Type": "Undirected", "Weight": "1"}, {"Source": "Ps 18", "Target": "Blitze", "Type": "Undirected", "Weight": "1"}, {"Source": "Ps 18", "Target": "Donner", "Type": "Undirected", "Weight": "1"}, {"Source": "Ps 18", "Target": "Hagel", "Type": "Undirected", "Weight": "1"}, {"Source": "Ps 18", "Target": "Wind", "Type": "Undirected", "Weight": "1"}, {"Source": "Ps 29", "Target": "Donner", "Type": "Undirected", "Weight": "1"}, {"Source": "Ps 68", "Target": "Donner", "Type": "Undirected", "Weight": "1"}, {"Source": "Ps 77", "Target": "Blitz", "Type": "Undirected", "Weight": "1"}, {"Source": "Ps 77", "Target": "Donner", "Type": "Undirected", "Weight": "1"}, {"Source": "Ps 77", "Target": "Regen", "Type": "Undirected", "Weight": "1"}, {"Source": "Ps 78", "Target": "Hagel", "Type": "Undirected", "Weight": "1"}, {"Source": "Ps 78", "Target": "Schlossen", "Type": "Undirected", "Weight": "1"}, {"Source": "Sir 40", "Target": "Feuer", "Type": "Undirected", "Weight": "1"}, {"Source": "Sir 40", "Target": "Flut", "Type": "Undirected", "Weight": "1"}, {"Source": "Sir 40", "Target": "Hagel", "Type": "Undirected", "Weight": "1"}, {"Source": "Spr 1", "Target": "Sturm", "Type": "Undirected", "Weight": "1"}, {"Source": "Spr 1", "Target": "Wetter", "Type": "Undirected", "Weight": "1"}, {"Source": "Weish 5", "Target": "Hagel", "Type": "Undirected", "Weight": "1"}, {"Source": "Zeph 1", "Target": "Ungestüm", "Type": "Undirected", "Weight": "1"}, {"Source": "Zeph 1", "Target": "Wetter", "Type": "Undirected", "Weight": "1"}];
+
+  Promise.resolve([nodesRaw, edgesRaw]).then(function (results) {
+    var nodesRaw = results[0], edgesRaw = results[1];
+
+    /* ── 1. Node map ── */
+    var nodeMap = {};
+    nodesRaw.forEach(function (r) {
+      var id = r.Id.trim();
+      nodeMap[id] = { id: id, label: r.Label.trim(), type: r.Type.trim(), deg: 0 };
+    });
+
+    /* ── 2. Edges & degree ── */
+    var links = [];
+    edgesRaw.forEach(function (r) {
+      var s = r.Source.trim(), t = r.Target.trim();
+      if (!nodeMap[s] || !nodeMap[t]) return;
+      links.push({ source: s, target: t });
+      nodeMap[s].deg++;
+      nodeMap[t].deg++;
+    });
+
+    var nodes = Object.values(nodeMap);
+
+    /* ── 3. Radius scales ── */
+    var maxDP = d3.max(nodes.filter(function(n){return n.type==='Predigt';}),     function(n){return n.deg;}) || 1;
+    var maxDB = d3.max(nodes.filter(function(n){return n.type==='Bibelstelle';}), function(n){return n.deg;}) || 1;
+    var maxDW = d3.max(nodes.filter(function(n){return n.type==='Wetter';}),      function(n){return n.deg;}) || 1;
+
+    var rP = d3.scaleSqrt().domain([1, maxDP]).range([12, 22]);
+    var rB = d3.scaleSqrt().domain([1, maxDB]).range([4,  13]);
+    var rW = d3.scaleSqrt().domain([1, maxDW]).range([12, 18]);
+
+    function nodeR(d) {
+      var deg = Math.max(d.deg, 1);
+      if (d.type === 'Predigt')     return rP(deg);
+      if (d.type === 'Bibelstelle') return rB(deg);
+      return rW(deg);
+    }
+
+    /* ── 4. Adjacency (built from string IDs before sim resolution) ── */
+    var neighbors = {};
+    links.forEach(function (l) {
+      var s = l.source, t = l.target;
+      if (!neighbors[s]) neighbors[s] = new Set();
+      if (!neighbors[t]) neighbors[t] = new Set();
+      neighbors[s].add(t);
+      neighbors[t].add(s);
+    });
+
+    /* ── 5. State ── */
+    var tx = d3.zoomIdentity;
+    var hoveredId = null;
+
+    /* ── 6. Canvas edge drawing — assigned to outer drawEdges ── */
+    drawEdges = function () {
+      var ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.save();
+      ctx.translate(tx.x, tx.y);
+      ctx.scale(tx.k, tx.k);
+      var lw = 1 / tx.k;
+
+      if (hoveredId) {
+        ctx.beginPath();
+        ctx.strokeStyle = '#1e1e1e';
+        ctx.lineWidth   = lw;
+        ctx.globalAlpha = 0.07;
+        links.forEach(function (l) {
+          if (nid(l.source) !== hoveredId && nid(l.target) !== hoveredId) {
+            ctx.moveTo(l.source.x, l.source.y);
+            ctx.lineTo(l.target.x, l.target.y);
+          }
+        });
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.strokeStyle = '#999';
+        ctx.lineWidth   = 1.3 / tx.k;
+        ctx.globalAlpha = 0.7;
+        links.forEach(function (l) {
+          if (nid(l.source) === hoveredId || nid(l.target) === hoveredId) {
+            ctx.moveTo(l.source.x, l.source.y);
+            ctx.lineTo(l.target.x, l.target.y);
+          }
+        });
+        ctx.stroke();
+      } else {
+        ctx.beginPath();
+        ctx.strokeStyle = '#2e2e2e';
+        ctx.lineWidth   = lw;
+        ctx.globalAlpha = 0.65;
+        links.forEach(function (l) {
+          ctx.moveTo(l.source.x, l.source.y);
+          ctx.lineTo(l.target.x, l.target.y);
+        });
+        ctx.stroke();
+      }
+      ctx.restore();
+    };
+
+    /* ── 7. Zoom ── */
+    var g = svgEl.append('g');
+    svgEl.call(
+      d3.zoom().scaleExtent([0.04, 16]).on('zoom', function (e) {
+        tx = e.transform;
+        g.attr('transform', tx);
+        drawEdges();
+      })
+    );
+
+    /* ── 8. Simulation ── */
+    var sim = d3.forceSimulation(nodes)
+      .force('link', d3.forceLink(links).id(function (d) { return d.id; })
+        .distance(function (d) {
+          var st = (typeof d.source === 'object' ? d.source.type : '') || '';
+          var tt = (typeof d.target === 'object' ? d.target.type : '') || '';
+          return (st === 'Predigt' || tt === 'Predigt') ? 95 : 55;
+        })
+        .strength(0.4))
+      .force('charge',    d3.forceManyBody().strength(-300).distanceMax(600))
+      .force('center',    d3.forceCenter(W() / 2, H() / 2))
+      .force('collision', d3.forceCollide().radius(function (d) { return nodeR(d) + 5; }).strength(0.85))
+      .stop();
+
+    /* Synchronous warmup for good initial spread */
+    for (var i = 0; i < 120; i++) sim.tick();
+
+    /* ── 9. Nodes ── */
+    var nodeSel = g.append('g')
+      .selectAll('g')
+      .data(nodes)
+      .join('g')
+      .attr('class', function (d) { return 'node ' + d.type; })
+      .call(
+        d3.drag()
+          .on('start', function (e, d) { if (!e.active) sim.alphaTarget(0.15).restart(); d.fx = d.x; d.fy = d.y; })
+          .on('drag',  function (e, d) { d.fx = e.x; d.fy = e.y; })
+          .on('end',   function (e, d) { if (!e.active) sim.alphaTarget(0); d.fx = null; d.fy = null; })
+      );
+
+    nodeSel.append('circle').attr('r', nodeR);
+
+    /* Weather icons via DOMParser */
+    nodeSel.filter(function (d) { return d.type === 'Wetter'; })
+      .each(function (d) {
+        try { this.appendChild(makeWetterIcon(d.id, nodeR(d))); } catch (e) { /* icon optional */ }
+      });
+
+    /* Initial render */
+    nodeSel.attr('transform', function (d) { return 'translate(' + d.x + ',' + d.y + ')'; });
+    drawEdges();
+
+    /* ── 10. Hover ── */
+    var tooltip = d3.select('#tooltip');
+
+    nodeSel
+      .on('mouseover', function (event, d) {
+        hoveredId = d.id;
+        var nb = neighbors[d.id] || new Set();
+        tooltip.style('opacity', 1).html(
+          '<div class="tt-type ' + d.type + '">' + d.type + '</div>' +
+          '<div class="tt-name">' + d.label + '</div>' +
+          '<div class="tt-count">' + d.deg + ' connection' + (d.deg !== 1 ? 's' : '') + '</div>'
+        );
+        nodeSel.classed('dimmed',      function (n) { return n.id !== d.id && !nb.has(n.id); });
+        nodeSel.classed('highlighted', function (n) { return n.id === d.id || nb.has(n.id); });
+        drawEdges();
+        positionTooltip(event);
+      })
+      .on('mousemove', positionTooltip)
+      .on('mouseout', function () {
+        hoveredId = null;
+        tooltip.style('opacity', 0);
+        nodeSel.classed('dimmed', false).classed('highlighted', false);
+        drawEdges();
+      });
+
+    function positionTooltip(event) {
+      var pt = d3.pointer(event, network);
+      var mx = pt[0], my = pt[1];
+      var nx = mx + 300 < W() ? mx + 14 : mx - 214;
+      var ny = Math.max(4, Math.min(my - 20, H() - 80));
+      tooltip.style('left', nx + 'px').style('top', ny + 'px');
+    }
+
+    /* ── 11. Animated tick ── */
+    sim.on('tick', function () {
+      nodeSel.attr('transform', function (d) { return 'translate(' + d.x + ',' + d.y + ')'; });
+      drawEdges();
+    });
+    sim.restart();
+
+    /* ── 12. UI ── */
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('legend').style.display  = 'block';
+    var counts = { Predigt: 0, Bibelstelle: 0, Wetter: 0 };
+    nodes.forEach(function (n) { if (counts[n.type] !== undefined) counts[n.type]++; });
+    document.getElementById('stats').innerHTML =
+      counts.Predigt + ' Predigten &middot; ' +
+      counts.Bibelstelle + ' Bibelstellen &middot; ' +
+      counts.Wetter + ' Wetterdaten &middot; ' +
+      links.length + ' Kanten';
+
+  }).catch(function (err) {
+    var el = document.getElementById('loading');
+    el.textContent = 'Error: ' + (err && err.message ? err.message : String(err));
+    console.error(err);
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sermon Networks — Little Ice Age</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --black:  #111111;
+    --dark:   #1a1a1a;
+    --panel:  #161616;
+    --border: #2a2a2a;
+    --red:    #8b1a1a;
+    --red-lt: #b52222;
+    --grey1:  #888888;
+    --grey2:  #555555;
+    --text:   #cccccc;
+    --white:  #f0f0f0;
+  }
+
+  html, body {
+    min-height: 100vh;
+    font-family: Georgia, serif;
+    color: var(--text);
+  }
+
+  body {
+    background: url('homepage.jpg') center center / cover no-repeat fixed;
+    background-color: var(--black);
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: rgba(8, 0, 0, 0.30);
+    z-index: 0;
+  }
+
+  main {
+    position: relative; z-index: 1;
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 4rem 2rem;
+    gap: 2rem;
+  }
+
+  /* ── Title box ── */
+  .title-box {
+    background: rgba(17, 17, 17, 0.93);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--red);
+    padding: 2.2rem 3.5rem;
+    text-align: center;
+    max-width: 660px; width: 100%;
+  }
+  .title-box h1 {
+    font-size: 1.35rem; font-weight: normal;
+    letter-spacing: .09em; text-transform: uppercase;
+    color: var(--white); line-height: 1.45;
+  }
+  .title-box .subtitle {
+    margin-top: .85rem;
+    font-size: .88rem; color: var(--grey1);
+    font-style: italic; letter-spacing: .03em;
+  }
+
+  /* ── Cards ── */
+  .cards {
+    display: flex; gap: 1.4rem;
+    max-width: 780px; width: 100%;
+  }
+  .card {
+    flex: 1;
+    background: rgba(17, 17, 17, 0.93);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--red);
+    padding: 2rem 1.6rem 1.6rem;
+    text-decoration: none; color: var(--text);
+    display: flex; flex-direction: column; gap: .75rem;
+    transition: border-color .2s, background .2s;
+  }
+  .card:hover {
+    border-color: var(--red-lt);
+    background: rgba(26, 26, 26, 0.97);
+  }
+  .card .tag {
+    font-family: 'Courier New', monospace;
+    font-size: .66rem; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--red-lt);
+  }
+  .card h2 {
+    font-size: 1rem; font-weight: normal;
+    color: var(--white); letter-spacing: .04em;
+    line-height: 1.4;
+  }
+  .card p {
+    font-size: .83rem; color: var(--grey1);
+    line-height: 1.65; font-style: italic;
+    flex: 1;
+  }
+  .card .meta {
+    font-family: 'Courier New', monospace;
+    font-size: .65rem; color: var(--grey2);
+    letter-spacing: .06em;
+  }
+  .card .arrow {
+    margin-top: .4rem;
+    font-size: .78rem; color: var(--red-lt);
+    font-family: 'Courier New', monospace;
+    letter-spacing: .07em;
+  }
+
+  /* ── Back link ── */
+  .back-row {
+    max-width: 780px; width: 100%;
+    display: flex;
+  }
+  .back {
+    font-size: .75rem; color: var(--grey2);
+    font-family: 'Courier New', monospace; letter-spacing: .07em;
+    text-transform: uppercase; text-decoration: none; transition: color .15s;
+  }
+  .back:hover { color: var(--red-lt); }
+
+  @media (max-width: 600px) {
+    .cards { flex-direction: column; }
+    .title-box { padding: 1.6rem 1.2rem; }
+    .title-box h1 { font-size: 1.05rem; }
+  }
+</style>
+</head>
+<body>
+<main>
+
+  <div class="back-row">
+    <a class="back" href="index.html">&#8592; Home</a>
+  </div>
+
+  <div class="title-box">
+    <h1>Sermon Networks</h1>
+    <p class="subtitle">Two network views of the sermon corpus — choose a perspective below.</p>
+  </div>
+
+  <div class="cards">
+
+    <a class="card" href="network-3.html">
+      <span class="tag">Tripartite Network</span>
+      <h2>Sermons, Bible Citations &amp; Weather Phenomena</h2>
+      <p>Visualise a network of 7 sermons, the Bible passages they cite, and the weather phenomena linked to them.</p>
+      <span class="meta">7 Predigten &middot; 235 Bibelstellen &middot; 33 Wetterdaten</span>
+      <span class="arrow">&#8594; Open</span>
+    </a>
+
+    <a class="card" href="network-2.html">
+      <span class="tag">Bipartite Network</span>
+      <h2>Sermons &amp; Bible Quotes</h2>
+      <p>Visualise a network of sermons and the Bible passages they employ across the whole corpus of 21 texts.</p>
+      <span class="meta">21 Predigten &middot; full corpus</span>
+      <span class="arrow">&#8594; Open</span>
+    </a>
+
+  </div>
+
+</main>
+</body>
+</html>
