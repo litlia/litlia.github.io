@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <title>Traces of the Little Ice Age in Early Modern Literature</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -10,23 +13,23 @@
     --black:  #111111;
     --dark:   #1a1a1a;
     --panel:  #161616;
-    --border: #2a2a2a;
+    --border: #333333;
     --red:    #8b1a1a;
     --red-lt: #b52222;
     --grey1:  #888888;
     --grey2:  #555555;
     --text:   #cccccc;
     --white:  #f0f0f0;
-    /* ── rgba helpers ── */
+    --overlay-bg: rgba(0,0,0,0.50);
+    --col-bg-l:   linear-gradient(to right, rgba(6,2,2,0.82) 0%, rgba(6,2,2,0.52) 100%);
+    --col-bg-r:   linear-gradient(to left,  rgba(6,2,2,0.82) 0%, rgba(6,2,2,0.52) 100%);
     --card-bg:    rgba(17,17,17,0.93);
     --card-hover: rgba(26,26,26,0.97);
     --ctx-bg:     rgba(17,17,17,0.88);
-    --overlay-bg: rgba(8,0,0,0.30);
     --mark-bg:    rgba(139,26,26,.32);
     --mark-text:  #e07070;
     --legend-bg:  rgba(22,22,22,.92);
   }
-
   [data-theme="light"] {
     --black:  #f2ede4;
     --dark:   #e6e0d5;
@@ -38,152 +41,207 @@
     --grey2:  #666666;
     --text:   #1a1a1a;
     --white:  #111111;
-    --card-bg:    rgba(242,237,228,0.95);
+    --overlay-bg: rgba(242,237,228,0.55);
+    --col-bg-l:   linear-gradient(to right, rgba(240,235,224,0.88) 0%, rgba(240,235,224,0.62) 100%);
+    --col-bg-r:   linear-gradient(to left,  rgba(240,235,224,0.88) 0%, rgba(240,235,224,0.62) 100%);
+    --card-bg:    rgba(242,237,228,0.96);
     --card-hover: rgba(230,224,213,0.98);
     --ctx-bg:     rgba(242,237,228,0.92);
-    --overlay-bg: rgba(255,250,240,0.15);
     --mark-bg:    rgba(139,26,26,.18);
     --mark-text:  #6a1a1a;
     --legend-bg:  rgba(235,229,218,.95);
   }
 
-  html, body {
-    min-height: 100vh;
-    font-family: Georgia, serif;
-    color: var(--text);
-  }
+  html, body { height: 100%; font-family: 'IM Fell English', Georgia, serif; color: var(--text); }
 
-  /* ── Full-bleed background ── */
   body {
     background: url('homepage.jpg') center center / cover no-repeat fixed;
-    background-color: var(--black);
+    background-color: #0a0505;
   }
-
-  /* Dark overlay so text boxes pop against the woodcut */
   body::before {
-    content: '';
-    position: fixed; inset: 0;
-    background: var(--overlay-bg);
-    z-index: 0;
+    content: ''; position: fixed; inset: 0;
+    background: var(--overlay-bg); z-index: 0;
   }
 
-  /* ── Page layout ── */
-  main {
+  .page {
     position: relative; z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
     min-height: 100vh;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    padding: 4rem 2rem;
-    gap: 2rem;
+    display: flex;
+    flex-direction: column;
   }
 
-  /* ── Title box ── */
-  .title-box {
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-top: 3px solid var(--red);
-    padding: 2.6rem 3.5rem;
-    text-align: center;
-    max-width: 740px; width: 100%;
-  }
-  .title-box h1 {
-    font-size: 1.55rem; font-weight: normal;
-    letter-spacing: .09em; text-transform: uppercase;
-    color: var(--white); line-height: 1.45;
-  }
-  .title-box .subtitle {
-    margin-top: 1rem;
-    font-size: .92rem; color: var(--grey1);
-    font-style: italic; letter-spacing: .03em;
+  .rule-red { border: none; border-top: 2px solid var(--red); flex-shrink: 0; }
+  .rule     { border: none; border-top: 1px solid var(--border); margin: 1.8rem 0; }
+
+  /* ── Two-column layout ── */
+  .layout {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1px 1fr;
   }
 
-  /* ── Three cards ── */
-  .cards {
-    display: flex; gap: 1.1rem;
-    max-width: 880px; width: 100%;
+  .col-divider { background: var(--border); }
+
+  /* ── Left column ── */
+  .col-left {
+    padding: 3.5rem 3.2rem 3rem;
+    background: var(--col-bg-l);
+    display: flex;
+    flex-direction: column;
   }
-  .card {
-    flex: 1;
-    background: var(--card-bg);
+
+  .title-area { text-align: center; margin-bottom: 0; }
+
+  .display-title {
+    font-family: 'IM Fell English', serif;
+    font-size: 2.3rem;
+    font-weight: normal;
+    color: var(--white);
+    line-height: 1.22;
+    letter-spacing: .01em;
+  }
+  .ornament {
+    margin: 1.4rem 0 .8rem;
+    font-size: 1rem;
+    color: var(--red);
+    letter-spacing: .55rem;
+  }
+  .display-subtitle {
+    font-family: 'IM Fell English SC', serif;
+    font-size: .9rem;
+    color: var(--grey1);
+    letter-spacing: .09em;
+  }
+
+  .about-text {
+    font-family: 'Spectral', Georgia, serif;
+    font-size: .92rem;
+    color: var(--grey1);
+    line-height: 1.8;
+    text-align: justify;
+  }
+  .about-text a { color: var(--grey1); transition: color .15s; }
+  .about-text a:hover { color: var(--red-lt); }
+
+  /* ── Info boxes (credits + notice) ── */
+  .info-box {
     border: 1px solid var(--border);
-    border-top: 3px solid var(--red);
-    padding: 1.8rem 1.4rem 1.4rem;
-    text-decoration: none; color: var(--text);
-    display: flex; flex-direction: column; gap: .65rem;
-    transition: border-color .2s, background .2s;
+    padding: .7rem .95rem;
   }
-  .card:hover {
-    border-color: var(--red-lt);
-    background: var(--card-hover);
-  }
-  .card .tag {
+  .info-box .box-label {
+    display: block;
     font-family: 'Courier New', monospace;
-    font-size: .68rem; letter-spacing: .14em;
-    text-transform: uppercase; color: var(--red-lt);
+    font-size: .54rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--red-lt);
+    margin-bottom: .45rem;
   }
-  .card h2 {
-    font-size: 1rem; font-weight: normal;
-    color: var(--white); letter-spacing: .04em;
+  .info-box p {
+    font-family: 'Spectral', Georgia, serif;
+    font-size: .76rem;
+    color: var(--grey2);
+    line-height: 1.72;
   }
-  .card p {
-    font-size: .83rem; color: var(--grey1);
-    line-height: 1.65; font-style: italic;
-    flex: 1;
+  .info-box a { color: var(--grey2); text-decoration: none; transition: color .15s; }
+  .info-box a:hover { color: var(--red-lt); }
+  .credits-box { margin-top: auto; padding-top: 2rem; }
+
+  /* ── Right column ── */
+  .col-right {
+    padding: 3.5rem 3.2rem 3rem;
+    background: var(--col-bg-r);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
   }
-  .card .arrow {
-    margin-top: .6rem;
-    font-size: .78rem; color: var(--red-lt);
+
+  .section-label {
+    display: block;
     font-family: 'Courier New', monospace;
+    font-size: .58rem;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--red-lt);
+    margin-bottom: .9rem;
+  }
+
+  a.entry {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+    padding: 1.4rem 0;
+    border-bottom: 1px solid var(--border);
+    text-decoration: none;
+    color: var(--text);
+  }
+  a.entry:first-of-type { border-top: 1px solid var(--border); }
+  a.entry:hover .entry-h { color: var(--red-lt); }
+
+  .entry-num {
+    font-family: 'IM Fell English', serif;
+    font-size: 1.6rem;
+    color: var(--red);
+    width: 2rem;
+    flex-shrink: 0;
+    line-height: 1;
+    padding-top: .25rem;
+    font-style: italic;
+  }
+  .entry-body { flex: 1; }
+  .entry-tag {
+    display: block;
+    font-family: 'Courier New', monospace;
+    font-size: .56rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--grey2);
+    margin-bottom: .25rem;
+  }
+  .entry-h {
+    font-family: 'IM Fell English', serif;
+    font-size: 1.12rem;
+    font-weight: normal;
+    color: var(--white);
+    transition: color .15s;
+    line-height: 1.3;
+  }
+  .entry-desc {
+    margin-top: .32rem;
+    font-family: 'Spectral', Georgia, serif;
+    font-size: .86rem;
+    color: var(--grey1);
+    line-height: 1.65;
+  }
+  .entry-open {
+    display: inline-block;
+    margin-top: .45rem;
+    font-family: 'Courier New', monospace;
+    font-size: .63rem;
+    color: var(--red-lt);
     letter-spacing: .07em;
   }
 
-  /* ── Context box ── */
-  .context-box {
-    max-width: 880px; width: 100%;
-    background: var(--ctx-bg);
-    border: 1px solid var(--border);
-    border-left: 3px solid var(--red);
-    padding: 1.2rem 1.8rem;
-    display: flex; flex-direction: column; gap: .5rem;
-  }
-  .context-box .ctx-label {
-    font-family: 'Courier New', monospace;
-    font-size: .65rem; letter-spacing: .16em;
-    text-transform: uppercase; color: var(--red-lt);
-  }
-  .context-box p {
-    font-size: .88rem; color: var(--grey1);
-    line-height: 1.7; font-style: italic;
-  }
-
-  /* ── Credits ── */
-  .credits {
-    background: var(--ctx-bg);
-    border: 1px solid var(--border);
-    padding: .65rem 1.6rem;
-    font-size: .76rem; color: var(--grey2);
-    letter-spacing: .04em; text-align: center;
-  }
-  .credits a {
-    color: var(--grey1); text-decoration: none;
-    border-bottom: 1px solid var(--grey2);
-    transition: color .15s, border-color .15s;
-  }
-  .credits a:hover { color: var(--red-lt); border-color: var(--red-lt); }
-
-  /* ── Responsive ── */
+  /* ── Theme toggle ── */
   #theme-toggle {
     position: fixed; top: 1rem; right: 1rem; z-index: 10;
-    background: var(--card-bg); border: 1px solid var(--border); border-radius: 3px;
-    cursor: pointer; font-size: .85rem; color: var(--grey2); padding: 4px 9px;
+    background: rgba(0,0,0,0.55); border: 1px solid var(--border); border-radius: 3px;
+    cursor: pointer; font-size: .85rem; color: var(--grey1); padding: 4px 9px;
     font-family: 'Courier New', monospace; transition: color .15s, border-color .15s;
   }
+  [data-theme="light"] #theme-toggle { background: rgba(240,235,225,0.75); }
   #theme-toggle:hover { color: var(--red-lt); border-color: var(--red-lt); }
 
-  @media (max-width: 640px) {
-    .cards { flex-direction: column; }
-    .title-box { padding: 1.8rem 1.4rem; }
-    .title-box h1 { font-size: 1.15rem; }
+  /* ── Mobile ── */
+  @media (max-width: 700px) {
+    .layout { grid-template-columns: 1fr; }
+    .col-divider { height: 1px; width: auto; }
+    .col-left, .col-right { padding: 2.5rem 1.6rem 2.5rem; }
+    .display-title { font-size: 1.75rem; }
+    .col-right { justify-content: flex-start; }
+    .credits-box { margin-top: 2rem; }
   }
 </style>
 <script>
@@ -195,51 +253,84 @@
 </script>
 </head>
 <body>
-<main>
 <button id="theme-toggle" onclick="toggleTheme()" aria-label="Toggle light/dark mode">☀</button>
 
-  <div class="title-box">
-    <h1>Traces of the Little Ice Age<br>in Early Modern Literature</h1>
-    <p class="subtitle"><a href="https://www.uni-potsdam.de/de/digital-humanities/aktivitaeten/environmental-digital-humanities-hackathon">#EcoHack26</a> challenge: modelling weather-related sermons</p>
+<div class="page">
+  <div class="rule-red"></div>
+  <div class="layout">
+
+    <!-- ── Left: title · about · credits ── -->
+    <div class="col-left">
+
+      <div class="title-area">
+        <h1 class="display-title">Traces of the Little Ice Age<br>in Early Modern Literature</h1>
+      </div>
+
+      <hr class="rule">
+
+      <p class="about-text">This page presents the results of a <a href="https://www.uni-potsdam.de/de/digital-humanities/aktivitaeten/environmental-digital-humanities-hackathon/challenges/early-modern-print-and-its-environmental-conditions">challenge</a> at the <a href="https://www.uni-potsdam.de/de/digital-humanities/aktivitaeten/environmental-digital-humanities-hackathon">"Environments in and as Networks" hackathon</a>, held from April 15 to 17, 2026 in Potsdam, Germany. The challenge was initiated by the <a href="https://www.uni-muenster.de/Germanistik/LitLIA/projekt.html">Emmy Noether Research Group "Traces of the 'Little Ice Age' in Early Modern Literature"</a> and aimed to explore and visualize the connections between early modern texts and historical weather conditions. <br> We focused on weather-related sermons, situating them in relation to historical weather conditions and tracing the connections between sermons through the weather phenomena they address and the Bible passages they cite. As an additional and unexpected outcome, we developed the Sermon Generator — a chatbot that suggests which Bible passages might serve as particularly fitting reference points for composing your own weather sermon.</p>
+
+      <div class="credits-box">
+        <div class="info-box">
+          <span class="box-label">Credits</span>
+          <p>
+            ▪ <a href="https://www.uni-muenster.de/Germanistik/LitLIA/projekt.html" target="_blank">Joana van de Löcht, Marvin Asmussen, Anne Ramin</a> (LitLIA Project, University of Münster)<br>
+            ▪ <a href="https://lucagiovannini7.github.io" target="_blank">Luca Giovannini</a> (Digital Humanities Network, University of Potsdam)
+          </p>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="col-divider"></div>
+
+    <!-- ── Right: index entries ── -->
+    <div class="col-right">
+
+      <div>
+        <span class="section-label">Contents</span>
+
+        <a class="entry" href="sermon-timeline.html">
+          <span class="entry-num">I.</span>
+          <div class="entry-body">
+            <span class="entry-tag">Visualisation</span>
+            <h2 class="entry-h">Sermon Timeline</h2>
+            <p class="entry-desc">Interactive map and timeline correlating early modern sermons with historical weather events across Central Europe.</p>
+            <span class="entry-open">Open →</span>
+          </div>
+        </a>
+
+        <a class="entry" href="sermon-networks.html">
+          <span class="entry-num">II.</span>
+          <div class="entry-body">
+            <span class="entry-tag">Analysis</span>
+            <h2 class="entry-h">Sermon Networks</h2>
+            <p class="entry-desc">Network graphs of Bible citation patterns across the corpus — bipartite and tripartite views.</p>
+            <span class="entry-open">Open →</span>
+          </div>
+        </a>
+
+        <a class="entry" href="sermon-generator.html">
+          <span class="entry-num">III.</span>
+          <div class="entry-body">
+            <span class="entry-tag">Tool</span>
+            <h2 class="entry-h">Your Personal Sermon Assistant</h2>
+            <p class="entry-desc">A chat-based tool for retrieving Bible passages relevant to historical weather phenomena.</p>
+            <span class="entry-open">Open →</span>
+          </div>
+        </a>
+      </div>
+
+      <div class="info-box">
+        <span class="box-label">Note</span>
+        <p>Last update: 21.04.2026. <br> This website is a prototype and is not actively maintained.</p>
+      </div>
+
+    </div>
+
   </div>
+</div>
 
-  <div class="context-box">
-    <span class="ctx-label">About</span>
-    <p>This page presents the results of the hackathon "Environments in and as Networks", held from April 15 to 17, 2026 at the University of Potsdam. This challenge was initiated by the <a href="https://www.uni-muenster.de/Germanistik/LitLIA/projekt.html">Emmy Noether Research Group "Traces of the 'Little Ice Age' in Early Modern Literature"</a> and aimed to explore and visualize the connections between early modern texts and historical weather conditions. We decided to focus on the clearly delineated text group of weather-related sermons, situating them in relation to historical weather conditions and tracing the connections between sermons through the weather phenomena they address and the Bible passages they cite. As an additional and unexpected outcome, we developed the Sermon Generator — a chatbot that suggests which Bible passages might serve as particularly fitting reference points for composing your own weather sermon.</p>
-  </div>
-
-  <div class="cards">
-
-    <a class="card" href="sermon-timeline.html">
-      <span class="tag">Visualisation</span>
-      <h2>Sermon Timeline</h2>
-      <p>Interactive map and timeline correlating early modern sermons with historical weather events.</p>
-      <span class="arrow">&#8594; Open</span>
-    </a>
-
-    <a class="card" href="sermon-networks.html">
-      <span class="tag">Analysis</span>
-      <h2>Sermon Networks</h2>
-      <p>Network graphs of Bible citation patterns across the sermon corpus — bipartite and tripartite views.</p>
-      <span class="arrow">&#8594; Open</span>
-    </a>
-
-    <a class="card" href="sermon-generator.html">
-      <span class="tag">Tool</span>
-      <h2>Your Personal Sermon Assistant</h2>
-      <p>Chat-based tool for retrieving Bible passages relevant to weather phenomena.</p>
-      <span class="arrow">&#8594; Open</span>
-    </a>
-
-  </div>
-
-  <p class="credits">
-    <b>Credits</b> <br> 
-	<a href="https://www.uni-muenster.de/Germanistik/LitLIA/projekt.html" target="_blank">Joana van de Löcht, Marvin Asmussen, Anne Ramin (Litlia Project, University of Münster)</a> <br>
-    <a href="https://lucagiovannini7.github.io">Luca Giovannini (DH Network, University of Potsdam)
-  </p>
-
-</main>
 <script>
 function toggleTheme(){
   var next=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';

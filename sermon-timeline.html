@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap" rel="stylesheet">
   <title>Little Ice Age — Sermons x Weather Correlation Timeline</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <style>
@@ -12,7 +15,7 @@
       --black:  #111111;
       --dark:   #1a1a1a;
       --panel:  #161616;
-      --border: #2a2a2a;
+      --border: #333333;
       --red:    #8b1a1a;
       --red-lt: #b52222;
       --grey1:  #888888;
@@ -50,14 +53,14 @@
   }
 
     html, body { height: 100%; background: var(--black); color: var(--text);
-                 font-family: 'Georgia', serif; overflow: hidden; }
+                 font-family: 'IM Fell English', Georgia, serif; overflow: hidden; }
 
     /* ── Header ─────────────────────────────────────── */
     header {
       height: 52px; background: var(--dark); border-bottom: 2px solid var(--red);
       display: flex; align-items: center; padding: 0 24px; gap: 16px; flex-shrink: 0;
     }
-    header h1 { font-size: 1rem; font-weight: normal; letter-spacing: .12em;
+    header h1 { font-size: 1rem; font-weight: normal; letter-spacing: .05em;
                 text-transform: uppercase; color: var(--white); }
     header .sub { font-size: .8rem; color: var(--grey1); font-style: italic; }
     header .pill {
@@ -85,7 +88,7 @@
     #sidebar-desc {
       padding: 14px 16px 12px;
       border-bottom: 1px solid var(--border);
-      font-size: .76rem; line-height: 1.65;
+      font-size: .8rem; line-height: 1.78;
       color: var(--grey1); font-style: italic;
     }
     #sidebar h2 {
@@ -99,8 +102,8 @@
     }
     .sermon-item:hover { background: var(--dark); }
     .sermon-item.active { background: var(--dark); border-left: 3px solid var(--red); }
-    .sermon-item .s-year { font-size: 1.1rem; color: var(--red); line-height: 1; }
-    .sermon-item .s-author { font-size: .78rem; color: var(--text); margin-top: 2px; }
+    .sermon-item .s-year { font-family: 'IM Fell English', serif; font-size: 1.2rem; color: var(--red); line-height: 1; }
+    .sermon-item .s-author { font-family: 'IM Fell English', serif; font-size: .82rem; color: var(--text); margin-top: 2px; }
     .sermon-item .s-place {
       font-size: .7rem; color: var(--grey1); margin-top: 2px;
       font-family: 'Courier New', monospace;
@@ -167,7 +170,7 @@
       flex-shrink: 0;
     }
     #card-header .card-year {
-      font-size: 1.3rem; color: var(--red); font-family: 'Georgia', serif;
+      font-size: 1.3rem; color: var(--red); font-family: 'IM Fell English', serif;
     }
     #card-header .card-author {
       font-size: .8rem; color: var(--text); margin-left: 10px; flex: 1;
@@ -214,8 +217,8 @@
       border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
       display: flex; align-items: center; padding: 0 24px; gap: 24px; overflow: hidden;
     }
-    #info-year   { font-size: 1.5rem; color: var(--red); font-family: 'Georgia', serif; flex-shrink: 0; }
-    #info-author { font-size: .82rem; color: var(--white); flex: 1; overflow: hidden;
+    #info-year   { font-size: 1.55rem; color: var(--red); font-family: 'IM Fell English', serif; flex-shrink: 0; }
+    #info-author { font-family: 'IM Fell English', serif; font-size: .86rem; color: var(--white); flex: 1; overflow: hidden;
                    text-overflow: ellipsis; white-space: nowrap; }
     #info-place  { font-size: .7rem; color: var(--grey1); font-family: 'Courier New', monospace; flex-shrink: 0; }
     #info-match  { font-size: .67rem; color: var(--red-lt); font-family: 'Courier New', monospace; flex-shrink: 0; }

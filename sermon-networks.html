@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap" rel="stylesheet">
 <title>Sermon Networks — Little Ice Age</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -10,7 +13,7 @@
     --black:  #111111;
     --dark:   #1a1a1a;
     --panel:  #161616;
-    --border: #2a2a2a;
+    --border: #333333;
     --red:    #8b1a1a;
     --red-lt: #b52222;
     --grey1:  #888888;
@@ -49,7 +52,7 @@
 
   html, body {
     min-height: 100vh;
-    font-family: Georgia, serif;
+    font-family: 'IM Fell English', Georgia, serif;
     color: var(--text);
   }
 
@@ -84,14 +87,16 @@
     max-width: 660px; width: 100%;
   }
   .title-box h1 {
-    font-size: 1.35rem; font-weight: normal;
-    letter-spacing: .09em; text-transform: uppercase;
-    color: var(--white); line-height: 1.45;
+    font-family: 'IM Fell English', serif;
+    font-size: 1.4rem; font-weight: normal;
+    letter-spacing: .04em; text-transform: uppercase;
+    color: var(--white); line-height: 1.35;
   }
   .title-box .subtitle {
     margin-top: .85rem;
+    font-family: 'IM Fell English SC', serif;
     font-size: .88rem; color: var(--grey1);
-    font-style: italic; letter-spacing: .03em;
+    font-style: normal; letter-spacing: .07em;
   }
 
   /* ── Cards ── */
@@ -119,13 +124,14 @@
     text-transform: uppercase; color: var(--red-lt);
   }
   .card h2 {
-    font-size: 1rem; font-weight: normal;
-    color: var(--white); letter-spacing: .04em;
-    line-height: 1.4;
+    font-family: 'IM Fell English', serif;
+    font-size: 1.1rem; font-weight: normal;
+    color: var(--white); letter-spacing: .02em;
+    line-height: 1.35;
   }
   .card p {
-    font-size: .83rem; color: var(--grey1);
-    line-height: 1.65; font-style: italic;
+    font-size: .88rem; color: var(--grey1);
+    line-height: 1.75; font-style: italic;
     flex: 1;
   }
   .card .meta {
@@ -141,16 +147,15 @@
   }
 
   /* ── Back link ── */
-  .back-row {
-    max-width: 780px; width: 100%;
-    display: flex; align-items: center; justify-content: space-between;
-  }
   .back {
-    font-size: .75rem; color: var(--grey2);
+    position: fixed; top: 1rem; left: 1rem; z-index: 10;
+    font-size: .75rem; color: var(--grey1);
     font-family: 'Courier New', monospace; letter-spacing: .07em;
     text-transform: uppercase; text-decoration: none; transition: color .15s;
+    background: var(--card-bg); border: 1px solid var(--border); border-radius: 3px;
+    padding: 4px 9px;
   }
-  .back:hover { color: var(--red-lt); }
+  .back:hover { color: var(--red-lt); border-color: var(--red-lt); }
 
   @media (max-width: 600px) {
     .cards { flex-direction: column; }

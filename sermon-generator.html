@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap" rel="stylesheet">
 <title>Little Ice Age — Sermon Quote Generator</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -10,7 +13,7 @@
     --black:  #111111;
     --dark:   #1a1a1a;
     --panel:  #161616;
-    --border: #2a2a2a;
+    --border: #333333;
     --red:    #8b1a1a;
     --red-lt: #b52222;
     --grey1:  #888888;
@@ -49,7 +52,7 @@
   html, body {
     height: 100vh; overflow: hidden;
     background: var(--black); color: var(--text);
-    font-family: Georgia, serif;
+    font-family: 'IM Fell English', Georgia, serif;
     display: flex; flex-direction: column;
   }
   header {
@@ -58,7 +61,7 @@
     display: flex; align-items: center; padding: 0 24px; gap: 12px;
   }
   header h1 {
-    font-size: 1rem; font-weight: normal; letter-spacing: .12em;
+    font-size: 1rem; font-weight: normal; letter-spacing: .05em;
     text-transform: uppercase; color: var(--white);
   }
   header .sub { font-size: .8rem; color: var(--grey1); font-style: italic; }
@@ -110,7 +113,7 @@
     flex: 1; padding: .7rem 1rem;
     background: var(--black); color: var(--white);
     border: 1px solid var(--border); border-radius: 2rem;
-    font-family: Georgia, serif; font-size: .95rem; outline: none;
+    font-family: 'IM Fell English', Georgia, serif; font-size: .95rem; outline: none;
     transition: border-color .2s;
   }
   #q::placeholder { color: var(--grey2); }
@@ -140,7 +143,7 @@
     color: var(--red-lt); letter-spacing: .08em; text-transform: uppercase;
     margin-bottom: .5rem;
   }
-  .card .verse-text { color: var(--text); font-size: .93rem; line-height: 1.6; font-style: italic; }
+  .card .verse-text { color: var(--text); font-size: .96rem; line-height: 1.75; font-style: italic; }
   .card .verse-text.loading { color: var(--grey2); font-style: normal; }
 
   /* ── Highlight ── */
