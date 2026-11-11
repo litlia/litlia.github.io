@@ -546,8 +546,8 @@ function offsetCoords(ll, idx) {
 
 // ── Map ───────────────────────────────────────────────────────────────────────
 const map = L.map('map', { center: [50.5, 11], zoom: 5, zoomControl: true });
-const _darkTile=L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; OpenStreetMap contributors &copy; CARTO',subdomains:'abcd',maxZoom:19});
-const _lightTile=L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; OpenStreetMap contributors &copy; CARTO',subdomains:'abcd',maxZoom:19});
+const _darkTile=L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=cb1_56sf_1_d2976d8244efd2bb76988f2c',{attribution:'&copy; OpenStreetMap contributors &copy; CARTO',subdomains:'abcd',maxZoom:19});
+const _lightTile=L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?key=cb1_56sf_1_d2976d8244efd2bb76988f2c',{attribution:'&copy; OpenStreetMap contributors &copy; CARTO',subdomains:'abcd',maxZoom:19});
 (document.documentElement.getAttribute('data-theme')==='light'?_lightTile:_darkTile).addTo(map);
 window.addEventListener('litlia-theme',function(){
   var isDark=document.documentElement.getAttribute('data-theme')==='dark';
